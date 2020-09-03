@@ -1,6 +1,6 @@
 '''
-By using Nakamura Alignment Tool, 
-make sure the xml-midi or midi-midi pair to be aligned.
+Make sure the xml-midi or midi-midi pair to be aligned
+by using Nakamura Alignment Tool
 
 After passing through AlignmentTool,
 match result files(.txt files) will be produced.
