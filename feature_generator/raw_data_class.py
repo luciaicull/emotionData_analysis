@@ -8,7 +8,8 @@ class MidiMidiDataset:
 
         '''
         Main Variable
-        # set_list : 
+        # set_list : list of set_dict
+                     set_dict -> {performance set name, performance set list}
         '''
         self.set_list = self.load_dataset()
 
