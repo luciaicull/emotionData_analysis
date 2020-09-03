@@ -28,6 +28,7 @@ class AlignmentTool:
 class XmlMidiAlignmentTool(AlignmentTool):
     def __init__(self, ref_path, target_path_list):
         super().__init__(ref_path, target_path_list)
+        
 
 class MidiMidiAlignmentTool(AlignmentTool):
     def __init__(self, ref_path, target_path_list):
