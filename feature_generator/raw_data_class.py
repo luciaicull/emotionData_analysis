@@ -2,7 +2,6 @@ from alignment import MidiMidiAlignmentTool
 import matching
 from midi_utils import midi_utils
 
-
 class MidiMidiDataset:
     def __init__(self, path):
         self.path = path        # type=Path()
@@ -32,7 +31,6 @@ class MidiMidiDataset:
             set_list.append(set_dict)
 
         return set_list
-
 
 
 class PerformanceSet:
