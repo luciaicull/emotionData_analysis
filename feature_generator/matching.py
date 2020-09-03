@@ -1,3 +1,7 @@
+""" 
+Utilities for matching process after applying Nakamura Algorithm
+"""
+
 import csv
 
 def read_corresp(txtpath):
