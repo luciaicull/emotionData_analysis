@@ -1,5 +1,7 @@
 from parser import get_parser
 from raw_data_class import MidiMidiDataset
+from feature_extraction import Extractor
+from constants import FEATURE_LIST
 
 def main():
     parser = get_parser()
@@ -17,7 +19,8 @@ def main():
         pass
     
     # extract features
-    
+    extractor = Extractor(dataset.set_list, FEATURE_LIST)
+    ex.extract_features()
 
 
 

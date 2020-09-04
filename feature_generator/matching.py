@@ -29,6 +29,7 @@ def match_midis(ref_notes, perf_notes, corresp_list):
         pair = {'ref':ref_note, 'perf':perf_note}
         pairs.append(pair)
     
+    pairs = sorted(pairs, key=lambda dic: dic['perf'].start)
     return pairs
 
 
