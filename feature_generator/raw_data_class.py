@@ -89,32 +89,34 @@ class PerformanceSet:
     
     def _split_pairs(self, pairs):
         # split data with {self.split} second
-        pairs = sorted(pairs, key=lambda dic: dic['ref'].start)
         
         if self.split == 0:
             return [pairs]
-
-        #end = pairs[-1]['ref'].start
         
         splitted_pairs = []
         cur_index = 0
         cur_time = pairs[cur_index]['ref'].start
         while True:
-            if cur_index >= len(pairs):
+            if cur_index >= len(pairs)-1:
                 break
 
             pair_fragment = []
             next_frag_time = cur_time + self.split
-            for i, dic in enumerate(pairs[cur_index:]):
+            for i in range(cur_index, len(pairs)):
+                dic = pairs[i]
                 note = dic['ref']
                 if cur_time <= note.start < next_frag_time:
-                    pair_fragment.append(note)
+                    pair_fragment.append(dic)
                 else:
                     break
             splitted_pairs.append(pair_fragment)
             cur_time = note.start
             cur_index = i
 
+        min_fragment_length = len(sorted(splitted_pairs[:-1], key=len)[0])
+        if len(splitted_pairs[-1]) < min_fragment_length/2:
+            splitted_pairs[-2] += splitted_pairs[-1]
+            del splitted_pairs[-1]
 
         return splitted_pairs
 
