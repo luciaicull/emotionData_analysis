@@ -3,9 +3,9 @@ import matching
 from midi_utils import midi_utils
 
 class MidiMidiDataset:
-    def __init__(self, path):
+    def __init__(self, path, split=0):
         self.path = path        # type=Path()
-
+        self.split = split
         '''
         Main Variable
         # set_list : list of set_dict
@@ -26,7 +26,7 @@ class MidiMidiDataset:
             file_set_dict[file_name].append(midi_file_path)
         
         for set_name in file_set_dict.keys():
-            performance_set = PerformanceSet(file_set_dict[set_name])
+            performance_set = PerformanceSet(file_set_dict[set_name], self.split)
             
             set_dict = {'name':set_name, 'list':performance_set.performance_set_list}
             set_list.append(set_dict)
@@ -35,7 +35,9 @@ class MidiMidiDataset:
 
 
 class PerformanceSet:
-    def __init__(self, performance_set_path_list):
+    def __init__(self, performance_set_path_list, split=0):
+        self.split = split # determine whether split performance into {split} seconds or not
+
         self.ref_path = None  # original emotion performance
         self.infer_path_list = []  # e1 ~ e5 emotion performance list
 
@@ -78,12 +80,44 @@ class PerformanceSet:
             data = PerformanceData(self.ref_path, path_dict['midi_path'], path_dict['corresp_path'])
             
             emotion_number = data.emotion_number
-            pairs = data.pairs
-            
+            pairs = self._split_pairs(data.pairs)
+
             performance_data = {'emotion_number':emotion_number, 'pairs':pairs}
             performance_set.append(performance_data)
 
         return performance_set
+    
+    def _split_pairs(self, pairs):
+        # split data with {self.split} second
+        pairs = sorted(pairs, key=lambda dic: dic['ref'].start)
+        
+        if self.split == 0:
+            return [pairs]
+
+        #end = pairs[-1]['ref'].start
+        
+        splitted_pairs = []
+        cur_index = 0
+        cur_time = pairs[cur_index]['ref'].start
+        while True:
+            if cur_index >= len(pairs):
+                break
+
+            pair_fragment = []
+            next_frag_time = cur_time + self.split
+            for i, dic in enumerate(pairs[cur_index:]):
+                note = dic['ref']
+                if cur_time <= note.start < next_frag_time:
+                    pair_fragment.append(note)
+                else:
+                    break
+            splitted_pairs.append(pair_fragment)
+            cur_time = note.start
+            cur_index = i
+
+
+        return splitted_pairs
+
             
 '''
 class for E1 note - E[1-5] note pairs
@@ -104,7 +138,7 @@ class PerformanceData:
                   pair -> {'ref': E1 note, 'perf': corresponding E[1-5] note}
         # emotion number : e1(original), e2(sad), e3(relaxed), e4(happy), e5(anger)
         '''
-        self.pairs = matching.match_midis(self.ref_notes, self.perf_notes, self.corresp)
+        self.pairs = self._get_pairs()
         self.emotion_number = self._get_emotion_number(midi_path.name)
         
     def _get_midi(self, path):
@@ -118,3 +152,5 @@ class PerformanceData:
         emotion_name = name.split('.')[-2] # '~~~.E1.mid'
         return int(emotion_name[1])
     
+    def _get_pairs(self):
+        return matching.match_midis(self.ref_notes, self.perf_notes, self.corresp)
