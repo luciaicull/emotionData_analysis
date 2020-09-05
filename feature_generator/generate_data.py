@@ -13,14 +13,14 @@ def main():
     # make dataset
     if args.direct:
         # midi - midi direct matching
-        dataset = MidiMidiDataset(emotion_path)
+        dataset = MidiMidiDataset(emotion_path, split=5)
     else:
         # score - midi matching
         pass
     
     # extract features
     extractor = Extractor(dataset.set_list, FEATURE_LIST)
-    ex.extract_features()
+    extractor.extract_features()
 
 
 
