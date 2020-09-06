@@ -1,8 +1,11 @@
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+from scipy.stats import skew, kurtosis
 
 class Extractor:
     def __init__(self, set_list, feature_list):
         self.set_list = set_list
-        self.feature_list = feature_list
+        self.feature_key_list = feature_list
     
     def extract_features(self):
         feature_data = []
@@ -18,7 +21,7 @@ class Extractor:
                 
                 feature_dict = self._init_feature_dict()
                 for pairs in midi_note_pair_list:
-                    for feature_key in self.feature_list:
+                    for feature_key in self.feature_key_list:
                         feat_list, relative_feat_list, ratio_feat_list = getattr(self, 'extract_'+feature_key)(pairs)
                         feature_dict[feature_key].append(feat_list)
                         if relative_feat_list is not None:
@@ -26,17 +29,58 @@ class Extractor:
                         if ratio_feat_list is not None:
                             feature_dict[feature_key+'_ratio'].append(ratio_feat_list)
                 
-                dic = {'emotion_number':emotion_number, 'feature_dict':feature_dict}
+                stats = self._get_stats(feature_dict)
+                dic = {'emotion_number':emotion_number, 'feature_dict':feature_dict, 'stats':stats}
                 feature_set_dict['set'].append(dic)
             
+            feature_set_dict['set'] = self._add_normalized_stats(feature_set_dict['set'])
             feature_data.append(feature_set_dict)
         
         return feature_data
+    
+
+    def _get_stats(self, feature_dict):
+        # feature dict = {'key1':feat_list, 'key2':feat_list, ...}
+        stats = dict()
+        for key in feature_dict.keys():
+            stats[key+'_mean'] = [np.mean(feat_list) for feat_list in feature_dict[key]]
+            stats[key+'_std'] = [np.std(feat_list) for feat_list in feature_dict[key]]
+            stats[key+'_skew'] = [skew(feat_list) for feat_list in feature_dict[key]]
+            stats[key+'_kurt'] = [kurtosis(feat_list) for feat_list in feature_dict[key]]
+        return stats
+
+
+    def _add_normalized_stats(self, set_dict_list):
+        # set_dict_list = [e1 dict, e2 dict, e3 dict, e4 dict, e5 dict]
+        # eN dict = {'emotion_number':emotion_number, 'feature_dict':feature_dict, 'stats':stats}
+        # stats = {'key1_mean':[fragment1 value, fragment2 value, ..], 'key1_std':[fragment1 value, fragment2 value, ..], ...}
+        stat_keys = list(set_dict_list[0]['stats'].keys())
+        num_fragment = len(set_dict_list[0]['stats'][stat_keys[0]])
+
+        total_stat_list = []  # (emotion_num x num_fragment, num_feature)
+        for eN_dict in set_dict_list:
+            stat_list = [eN_dict['stats'][k] for k in stat_keys]
+            stat_list = np.array(stat_list).T
+            total_stat_list += list(stat_list)
+        
+        scaler = StandardScaler()
+        scaler.fit(total_stat_list)
+
+        scaled_total_stat_list = scaler.transform(total_stat_list)  # (emotion_num x num_fragment, num_feature)
+        for i, eN_dict in enumerate(set_dict_list):
+            scaled_stat_list = scaled_total_stat_list[i*num_fragment:(i+1)*num_fragment]
+            scaled_stat_list = list(np.array(scaled_stat_list).T) # (num_feature, num_fragment)
+
+            eN_dict['scaled_stats'] = dict()
+            for i, k in enumerate(stat_keys):
+                eN_dict['scaled_stats'][k] = scaled_stat_list[i]
+        
+        return set_dict_list
 
                         
     def _init_feature_dict(self):
         feature_dict = dict()
-        for feature_key in self.feature_list:
+        for feature_key in self.feature_key_list:
             feature_dict[feature_key] = []
             if feature_key is not 'interval':
                 feature_dict['relative_'+feature_key] = []
