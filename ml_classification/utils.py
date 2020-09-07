@@ -2,7 +2,7 @@ import _pickle as cPickle
 import pickle
 import numpy as np
 
-from .constants import TEST_LIST
+from .constants import TEST_LIST, MIDIMIDI_FEATURE_KEYS
 
 def save_datafile(path, name, data):
     with open(path.joinpath(name), "wb") as f:
@@ -14,7 +14,7 @@ def load_datafile(path, name):
         u = cPickle.Unpickler(f)
         data = u.load()
     return data
-    
+
 
 def split_train_test(feature_data):
     train_data = []
@@ -36,7 +36,6 @@ def split_train_test(feature_data):
 def make_X_Y(feature_data):
     x = []
     y = []
-    feature_key_list = feature_data[0]['set'][0]['scaled_stats'].keys()
 
     for emotion_set in feature_data:
         set_name = emotion_set['name']
@@ -48,9 +47,9 @@ def make_X_Y(feature_data):
 
             for i in range(0, fragment_num):    # in no_split, fragment_num=1
                 data = []
-                for key in feature_key_list:
+                for key in MIDIMIDI_FEATURE_KEYS:
                     data.append(scaled_stats[key][i])
                 x.append(data)
                 y.append(emotion_number)
 
-    return np.array(x), np.array(y), feature_key_list
+    return np.array(x), np.array(y)

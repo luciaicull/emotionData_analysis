@@ -12,7 +12,9 @@ def main():
     total_data, train_data, test_data = utils.split_train_test(feature_data)
 
     r = Runner(total_data, train_data, test_data)
+    r.run_svm()
 
+    print('')
 
 
 if __name__ == "__main__":

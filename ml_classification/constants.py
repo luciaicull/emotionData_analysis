@@ -1,13 +1,18 @@
-MIDIMIDI_FEATURE_KEYS = ['relative_velocity_mean', 'relative_velocity_std', 'relative_velocity_kurt',
-                         'velocity_ratio_std', 'velocity_ratio_kurt', 'velocity_ratio_skew',
+MIDIMIDI_FEATURE_KEYS = ['relative_velocity_std', 'relative_velocity_kurt',
+                         'velocity_ratio_std', 'velocity_ratio_kurt', 
 
-                         'relative_original_duration_mean', 'relative_original_duration_std',
+                         'relative_original_duration_std',
                          'original_duration_ratio_mean',
 
-                         'relative_elongated_duration_std', 'relative_elongated_duration_kurt',
-                         'elongated_duration_ratio_std', 'elongated_duration_ratio_skew',
-
+                         'relative_elongated_duration_std', 
+                         
                          'interval_mean']
+
+
+'''
+MIDIMIDI_FEATURE_KEYS = ['velocity_ratio_mean', 'velocity_ratio_std', 'relative_velocity_mean', 'relative_velocity_std', 'relative_velocity_kurt',
+'original_duration_ratio_mean', 'relative_original_duration_mean']
+'''
 
 TEST_LIST = ['Bach.french-suite_bwv812_no1_allemande.mm_1-end.s004',
              'Bach.french-suite_bwv816_no5_courante.mm_1-end.s002',
