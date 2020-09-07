@@ -1,7 +1,7 @@
 import torch as th
 import torch.nn as nn
 
-from constants import FEATURE_KEYS
+from .constants import FEATURE_KEYS
 
 class SimpleClassifier(nn.Module):
     def __init__(self):

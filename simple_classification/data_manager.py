@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
-from constants import DATA_PATH, FILE_NAME, VALID_LIST, TEST_LIST, STAT_TYPE, FEATURE_KEYS, BATCH_SIZE
+from .constants import DATA_PATH, FILE_NAME, VALID_LIST, TEST_LIST, STAT_TYPE, FEATURE_KEYS, BATCH_SIZE
 
 class RawDataLoader(object):
     def __init__(self, data_path, file_name):
