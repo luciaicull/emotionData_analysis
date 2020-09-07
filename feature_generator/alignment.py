@@ -31,6 +31,39 @@ class AlignmentTool:
 class XmlMidiAlignmentTool(AlignmentTool):
     def __init__(self, ref_path, target_path_list):
         super().__init__(ref_path, target_path_list)
+    
+    def align(self):
+        corresp_file_path_list = []
+
+        #print("Processing reference: {}".format(self.ref_path.name[:-len('.E1.mid')]))
+        for target_path in self.target_path_list:
+            #print("Processing target: {}".format(target_path.name[:-len('.E1.mid')]))
+            
+            aligned_file_name = target_path.name[:-len('.mid')] + '_match.txt'
+            aligned_file_path = target_path.parent.joinpath(aligned_file_name)
+            
+            if not aligned_file_path.exists():
+                self._align_with_nakamura(self.ref_path, target_path, aligned_file_path)
+            
+            corresp_file_path_list.append(aligned_file_path)
+        
+        return corresp_file_path_list
+
+    def _align_with_nakamura(self, ref_path, target_path, aligned_file_path):
+        align_tool_path = Path(ALIGN_DIR)
+        shutil.copy(ref_path, align_tool_path.joinpath("ref.xml"))
+        shutil.copy(target_path, align_tool_path.joinpath("target.mid"))
+
+        current_dir = os.getcwd()
+
+        os.chdir(ALIGN_DIR)
+        subprocess.check_call(
+            ["sudo", "sh", "MusicXMLToMIDIAlign.sh", "ref", "target"])
+        
+        shutil.move('target_match.txt', aligned_file_path)
+
+        os.chdir(current_dir)
+
         
 
 class MidiMidiAlignmentTool(AlignmentTool):
