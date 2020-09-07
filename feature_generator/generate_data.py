@@ -27,9 +27,9 @@ def generate():
         # score - midi matching
         pass
     
-    utils.save_datafile(emotion_save_path, 'dataset.dat', dataset)
+    utils.save_datafile(emotion_save_path, '5sec_split_dataset.dat', dataset)
     
-    dataset = utils.load_datafile(emotion_save_path, 'dataset.dat')
+    dataset = utils.load_datafile(emotion_save_path, '5sec_split_dataset.dat')
     # extract features
     extractor = Extractor(dataset.set_list, FEATURE_LIST)
     feature_data = extractor.extract_features()

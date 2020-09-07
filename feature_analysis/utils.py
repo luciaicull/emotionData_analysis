@@ -1,5 +1,6 @@
 import _pickle as cPickle
 import pickle
+import numpy as np
 
 def save_datafile(path, name, data):
     with open(path.joinpath(name), "wb") as f:
@@ -32,4 +33,4 @@ def make_X_Y(feature_data):
                 x.append(data)
                 y.append(emotion_number)
 
-    return x, y, feature_key_list
+    return np.array(x), np.array(y), feature_key_list

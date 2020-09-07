@@ -19,7 +19,7 @@ class Extractor:
             for performance_set in set_list:
                 emotion_number = performance_set['emotion_number']
                 midi_note_pair_list = performance_set['pairs']
-                
+
                 feature_dict = self._init_feature_dict()
                 for pairs in midi_note_pair_list:
                     for feature_key in self.feature_key_list:
@@ -181,7 +181,7 @@ class Extractor:
 
     def extract_interval(self, midi_note_pair_list):
         # interval between two note in eN note which is 1 second between aligned e1 notes
-
+        interval_sec = 1
         interval_list = []
         cur_index = 0
         #cur_pair = midi_note_pair_list[cur_index]
@@ -194,7 +194,7 @@ class Extractor:
             
             cur_pair = midi_note_pair_list[cur_index]
             cur_sec = cur_pair['ref'].start
-            next_sec = cur_sec + 1
+            next_sec = cur_sec + interval_sec
             for i in range(cur_index, len(midi_note_pair_list)):
                 pair = midi_note_pair_list[i]
 
