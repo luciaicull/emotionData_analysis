@@ -13,8 +13,11 @@ import shutil
 import os
 import subprocess
 
-from constants import ALIGN_DIR
-
+from .constant import ALIGN_DIR
+'''
+# for debugging
+from constant import ALIGN_DIR
+'''
 class AlignmentTool:
     def __init__(self, ref_path, target_path_list):
         '''
@@ -37,9 +40,9 @@ class MidiMidiAlignmentTool(AlignmentTool):
     def align(self):
         corresp_file_path_list = []
 
-        print("Processing reference: {}".format(self.ref_path.name[:-len('.E1.mid')]))
+        #print("Processing reference: {}".format(self.ref_path.name[:-len('.E1.mid')]))
         for target_path in self.target_path_list:
-            print("Processing target: {}".format(target_path.name[:-len('.E1.mid')]))
+            #print("Processing target: {}".format(target_path.name[:-len('.E1.mid')]))
             
             aligned_file_name = target_path.name[:-len('.mid')] + '_corresp.txt'
             aligned_file_path = target_path.parent.joinpath(aligned_file_name)

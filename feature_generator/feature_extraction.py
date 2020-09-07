@@ -1,6 +1,7 @@
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 from scipy.stats import skew, kurtosis
+from tqdm import tqdm
 
 class Extractor:
     def __init__(self, set_list, feature_list):
@@ -10,7 +11,7 @@ class Extractor:
     def extract_features(self):
         feature_data = []
 
-        for set_dict in self.set_list:
+        for set_dict in tqdm(self.set_list):
             set_name = set_dict['name']
             set_list = set_dict['list']
 
@@ -22,12 +23,15 @@ class Extractor:
                 feature_dict = self._init_feature_dict()
                 for pairs in midi_note_pair_list:
                     for feature_key in self.feature_key_list:
-                        feat_list, relative_feat_list, ratio_feat_list = getattr(self, 'extract_'+feature_key)(pairs)
-                        feature_dict[feature_key].append(feat_list)
-                        if relative_feat_list is not None:
-                            feature_dict['relative_'+feature_key].append(relative_feat_list)
-                        if ratio_feat_list is not None:
-                            feature_dict[feature_key+'_ratio'].append(ratio_feat_list)
+                        try:
+                            feat_list, relative_feat_list, ratio_feat_list = getattr(self, 'extract_'+feature_key)(pairs)
+                            feature_dict[feature_key].append(feat_list)
+                            if relative_feat_list is not None:
+                                feature_dict['relative_'+feature_key].append(relative_feat_list)
+                            if ratio_feat_list is not None:
+                                feature_dict[feature_key+'_ratio'].append(ratio_feat_list)
+                        except:
+                            print(set_name, emotion_number, feature_key)
                 
                 stats = self._get_stats(feature_dict)
                 dic = {'emotion_number':emotion_number, 'feature_dict':feature_dict, 'stats':stats}
@@ -180,11 +184,15 @@ class Extractor:
 
         interval_list = []
         cur_index = 0
-        cur_pair = midi_note_pair_list[cur_index]
+        #cur_pair = midi_note_pair_list[cur_index]
         while True:
+            while (midi_note_pair_list[cur_index]['perf'] is None) and (cur_index < len(midi_note_pair_list)-1):
+                cur_index += 1
+
             if cur_index >= len(midi_note_pair_list)-1:
                 break
             
+            cur_pair = midi_note_pair_list[cur_index]
             cur_sec = cur_pair['ref'].start
             next_sec = cur_sec + 1
             for i in range(cur_index, len(midi_note_pair_list)):
@@ -193,6 +201,15 @@ class Extractor:
                 if pair['ref'].start < next_sec:
                     continue
                 else:
+                    if pair['perf'] is None:
+                        if (i == len(midi_note_pair_list) - 1) or (midi_note_pair_list[i+1]['perf'] is None):
+                            pair = midi_note_pair_list[i-1]
+                        else:
+                            pair = midi_note_pair_list[i+1]
+                    
+                    if pair['perf'] is None:
+                        break
+                        
                     interval = pair['perf'].start - cur_pair['perf'].start
                     interval_list.append(interval)
                     break

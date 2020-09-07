@@ -1,6 +1,14 @@
+
+from .alignment import MidiMidiAlignmentTool
+from . import matching
+from .midi_utils import midi_utils
+'''
+# for debugging
 from alignment import MidiMidiAlignmentTool
 import matching
 from midi_utils import midi_utils
+'''
+from tqdm import tqdm
 
 class MidiMidiDataset:
     def __init__(self, path, split=0):
@@ -25,7 +33,7 @@ class MidiMidiDataset:
                 file_set_dict[file_name] = []
             file_set_dict[file_name].append(midi_file_path)
         
-        for set_name in file_set_dict.keys():
+        for set_name in tqdm(file_set_dict.keys()):
             performance_set = PerformanceSet(file_set_dict[set_name], self.split)
             
             set_dict = {'name':set_name, 'list':performance_set.performance_set_list}
