@@ -10,7 +10,7 @@ from midi_utils import midi_utils
 '''
 from tqdm import tqdm
 
-class MidiMidiDataset:
+class Dataset:
     def __init__(self, path, split=0):
         self.path = path        # type=Path()
         self.split = split
@@ -20,6 +20,27 @@ class MidiMidiDataset:
                      set_dict -> {performance set name, performance set list}
         '''
         self.set_list = self.load_dataset()
+
+    @classmethod
+    @abstractmethod
+    def load_dataset(self):
+        raise NotImplementedError
+
+    
+
+class XmlMidiDataset(Dataset):
+    def __init__(self, path, split=0):
+        super().__init__(path, split)
+    
+    def load_dataset(self):
+        set_list = []
+        
+
+
+
+class MidiMidiDataset(Dataset):
+    def __init__(self, path, split=0):
+        super().__init__(path, split)
 
     def load_dataset(self):
         set_list = []
