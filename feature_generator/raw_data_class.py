@@ -1,5 +1,5 @@
 
-from .alignment import MidiMidiAlignmentTool
+from .alignment import MidiMidiAlignmentTool, XmlMidiAlignmentTool
 from . import matching
 from .midi_utils import midi_utils
 '''
@@ -34,8 +34,31 @@ class XmlMidiDataset(Dataset):
     
     def load_dataset(self):
         set_list = []
-        
 
+        xml_file_path_list = sorted(self.path.glob('*.xml'))
+        midi_file_path_list = sorted(self.path.glob('*.E[1-5].mid'))
+        file_set_dict = dict()
+
+        for midi_file_path in midi_file_path_list:
+            file_name = midi_file_path.name[:-len('.E0.mid')]
+            if file_name not in file_set_dict.keys():
+                file_set_dict[file_name] = {'score': None, 
+                                            'emotion_midi_list':[]}
+            file_set_dict[file_name]['emotion_midi_list'].append(midi_file_path)
+        
+        for xml_file_path in xml_file_path_list:
+            score_name = xml_file_path.name[:-len('.xml')]
+            for file_name in file_set_dict.keys():
+                if score_name in file_name:
+                    file_set_dict[file_name]['score'] = xml_file_path
+
+        for set_name in tqdm(file_set_dict.keys()):
+            performance_set = XmlMidiPerformanceSet(file_set_dict[set_name], self.split)
+            set_dict = {'name': set_name,
+                        'list': performance_set.performance_set_list}
+            set_list.append(set_dict)
+        
+        return set_list
 
 
 class MidiMidiDataset(Dataset):
@@ -55,22 +78,37 @@ class MidiMidiDataset(Dataset):
             file_set_dict[file_name].append(midi_file_path)
         
         for set_name in tqdm(file_set_dict.keys()):
-            performance_set = PerformanceSet(file_set_dict[set_name], self.split)
+            performance_set = MidiMidiPerformanceSet(file_set_dict[set_name], self.split)
             
-            set_dict = {'name':set_name, 'list':performance_set.performance_set_list}
+            set_dict = {'name':set_name, 
+                        'list':performance_set.performance_set_list}
             set_list.append(set_dict)
 
         return set_list
 
-
 class PerformanceSet:
-    def __init__(self, performance_set_path_list, split=0):
-        self.split = split # determine whether split performance into {split} seconds or not
+    def __init__(self, performance_set_paths, split=0):
+        # determine whether split performance into {split} seconds or not
+        self.split = split
 
         self.ref_path = None  # original emotion performance
         self.infer_path_list = []  # e1 ~ e5 emotion performance list
+    
+    @classmethod
+    @abstractmethod
+    def _check_alignment(self, performance_set_paths):
+        raise NotImplementedError
 
-        self.path_dict_list = self._check_alignment(performance_set_path_list)
+    @classmethod
+    @abstractmethod
+    def _make_performance_set(self):
+        raise NotImplementedError
+
+
+class MidiMidiPerformanceSet(PerformanceSet):
+    def __init__(self, performance_set_paths, split=0):
+        super().__init__(performance_set_paths, split)
+        self.path_dict_list = self._check_alignment(performance_set_paths)
 
         '''
         Main Variable
@@ -79,10 +117,11 @@ class PerformanceSet:
                performance data -> {emotion number, note pair}
         '''
         self.performance_set_list = self._make_performance_set()
-    
-    def _check_alignment(self, performance_set_path_list):
+
+
+    def _check_alignment(self, performance_set_paths):
         
-        for perf_path in performance_set_path_list:
+        for perf_path in performance_set_paths:
             if '.E1.mid' in perf_path.name:
                 self.ref_path = perf_path
             
@@ -102,20 +141,22 @@ class PerformanceSet:
 
         return path_dict_list
     
+
     def _make_performance_set(self):
-        performance_set = []
+        performance_set_list = []
 
         for path_dict in self.path_dict_list:
-            data = PerformanceData(self.ref_path, path_dict['midi_path'], path_dict['corresp_path'])
+            data = MidiMidiPerformanceData(self.ref_path, path_dict['midi_path'], path_dict['corresp_path'])
             
             emotion_number = data.emotion_number
             pairs = self._split_pairs(data.pairs)
 
             performance_data = {'emotion_number':emotion_number, 'pairs':pairs}
-            performance_set.append(performance_data)
+            performance_set_list.append(performance_data)
 
-        return performance_set
+        return performance_set_list
     
+
     def _split_pairs(self, pairs):
         # split data with {self.split} second
         
@@ -149,28 +190,58 @@ class PerformanceSet:
 
         return splitted_pairs
 
-            
-'''
-class for E1 note - E[1-5] note pairs
-'''
-class PerformanceData:
-    def __init__(self, ref_path, midi_path, corresp_path):
-        self.ref_path = ref_path
-        self.midi_path = midi_path
 
-        self.ref_notes = self._get_midi(str(ref_path))
-        self.perf_notes = self._get_midi(str(midi_path))
+class XmlMidiPerformanceSet(PerformanceSet):
+    def __init__(self, performance_set_paths, split=0):
+        super().__init__(performance_set_paths, split)
+
+        # score xml path
+        self.ref_path = performance_set_paths['score']
+        # e1 ~ e5 emotion performance list
+        self.infer_path_list = performance_set_paths['emotion_midi_list']
         
-        self.corresp = matching.read_corresp(corresp_path)
+        self.path_dict_list = self._check_alignment(performance_set_paths)
 
         '''
         Main Variable
-        # pairs : list of pair
-                  pair -> {'ref': E1 note, 'perf': corresponding E[1-5] note}
-        # emotion number : e1(original), e2(sad), e3(relaxed), e4(happy), e5(anger)
+        # performance_set_list
+             : list of performance data dictionary from PerformanceData class
+               performance data -> {emotion number, note pair}
         '''
-        self.pairs = self._get_pairs()
-        self.emotion_number = self._get_emotion_number(midi_path.name)
+        self.performance_set_list = self._make_performance_set()
+
+
+    def _check_alignment(self):
+        tool = XmlMidiAlignmentTool(self.ref_path, self.infer_path_list)
+        match_file_path_list = tool.align()
+
+        self.infer_path_list = sorted(self.infer_path_list)
+        match_file_path_list = sorted(match_file_path_list)
+
+        path_dict_list = []
+
+        for midi, match in zip(self.infer_path_list, match_file_path_list):
+            path_dict = {'midi_path': midi, 'match_path': match}
+            path_dict_list.append(path_dict)
+
+        return path_dict_list
+
+    def _make_performance_set(self):
+        performance_set_list = []
+
+        for path_dict in self.path_dict_list:
+            data = XmlMidiPerformanceData(self.ref_path, path_dict['midi_path'], path_dict['match_path'])
+
+
+'''
+class for ref note - E[1-5] note pairs
+'''
+class PerformanceData:
+    def __init__(self, ref_path, midi_path, txt_path):
+        self.ref_path = ref_path
+        self.midi_path = midi_path
+        self.txt_path = txt_path
+
         
     def _get_midi(self, path):
         midi = midi_utils.to_midi_zero(path, save_name='tmp.mid')
@@ -183,5 +254,45 @@ class PerformanceData:
         emotion_name = name.split('.')[-2] # '~~~.E1.mid'
         return int(emotion_name[1])
     
+    @classmethod
+    @abstractmethod
     def _get_pairs(self):
-        return matching.match_midis(self.ref_notes, self.perf_notes, self.corresp)
+        raise NotImplementedError
+    
+
+class XmlMidiPerformanceData(PerformanceData):
+    def __init__(self, ref_path, midi_path, txt_path):
+        super().__init__(ref_path, midi_path, txt_path)
+
+        '''
+        Main Variable
+        # pairs : list of pair
+                  pair -> {'ref': xml note, 'perf': corresponding E[1-5] note}
+        # emotion number : e1(original), e2(sad), e3(relaxed), e4(happy), e5(anger)
+        '''
+        self.pairs = self._get_pairs()
+        self.emotion_number = self._get_emotion_number(midi_path.name)
+    
+    def _get_pairs(self):
+        # TODO
+        # need xml_notes, xml_beat_poisitions, midi_notes
+
+
+class MidiMidiPerformanceData(PerformanceData):
+    def __init__(self, ref_path, midi_path, txt_path):
+        super().__init__(ref_path, midi_path, txt_path)
+
+        '''
+        Main Variable
+        # pairs : list of pair
+                  pair -> {'ref': E1 note, 'perf': corresponding E[1-5] note}
+        # emotion number : e1(original), e2(sad), e3(relaxed), e4(happy), e5(anger)
+        '''
+        self.pairs = self._get_pairs()
+        self.emotion_number = self._get_emotion_number(midi_path.name)
+    
+    def _get_pairs(self):
+        ref_notes = self._get_midi(str(self.ref_path))
+        perf_notes = self._get_midi(str(self.midi_path))
+        corresp = matching.read_corresp(self.txt_path)
+        return matching.match_midis(ref_notes, perf_notes, corresp)
