@@ -231,7 +231,21 @@ class XmlMidiPerformanceSet(PerformanceSet):
 
         for path_dict in self.path_dict_list:
             data = XmlMidiPerformanceData(self.ref_path, path_dict['midi_path'], path_dict['match_path'])
+            emotion_number = data.emotion_number
+            pairs = self._split_pairs(data.pairs)
 
+            # TODO
+            # in this case, need beat tempo information in data for feature extraction
+            # or at least xml object
+            performance_data = {'emotion_number':emotion_number, 'pairs':pairs}
+            performance_set_list.append(performance_data)
+
+        return performance_set_list
+    
+    def _split_pairs(self, pairs):
+        # TODO
+        # split pairs into self.split seconds
+        pass
 
 '''
 class for ref note - E[1-5] note pairs
@@ -276,6 +290,8 @@ class XmlMidiPerformanceData(PerformanceData):
     def _get_pairs(self):
         # TODO
         # need xml_notes, xml_beat_poisitions, midi_notes
+        # or just xml-midi note pair and xml object?
+        pass
 
 
 class MidiMidiPerformanceData(PerformanceData):
