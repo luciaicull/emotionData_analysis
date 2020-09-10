@@ -33,7 +33,7 @@ class XmlMidiAlignmentTool(AlignmentTool):
         super().__init__(ref_path, target_path_list)
     
     def align(self):
-        corresp_file_path_list = []
+        match_file_path_list = []
 
         #print("Processing reference: {}".format(self.ref_path.name[:-len('.E1.mid')]))
         for target_path in self.target_path_list:
@@ -45,9 +45,9 @@ class XmlMidiAlignmentTool(AlignmentTool):
             if not aligned_file_path.exists():
                 self._align_with_nakamura(self.ref_path, target_path, aligned_file_path)
             
-            corresp_file_path_list.append(aligned_file_path)
+            match_file_path_list.append(aligned_file_path)
         
-        return corresp_file_path_list
+        return match_file_path_list
 
     def _align_with_nakamura(self, ref_path, target_path, aligned_file_path):
         align_tool_path = Path(ALIGN_DIR)
