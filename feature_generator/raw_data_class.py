@@ -1,7 +1,8 @@
 
 from .alignment import MidiMidiAlignmentTool, XmlMidiAlignmentTool
-from . import matching
+from . import matching, xml_utils
 from .midi_utils import midi_utils
+from .musicxml_parser import MusicXMLDocument
 '''
 # for debugging
 from alignment import MidiMidiAlignmentTool
@@ -9,6 +10,7 @@ import matching
 from midi_utils import midi_utils
 '''
 from tqdm import tqdm
+from abc import abstractmethod
 
 class Dataset:
     def __init__(self, path, split=0):
@@ -96,7 +98,7 @@ class PerformanceSet:
     
     @classmethod
     @abstractmethod
-    def _check_alignment(self, performance_set_paths):
+    def _check_alignment(self):
         raise NotImplementedError
 
     @classmethod
@@ -200,7 +202,7 @@ class XmlMidiPerformanceSet(PerformanceSet):
         # e1 ~ e5 emotion performance list
         self.infer_path_list = performance_set_paths['emotion_midi_list']
         
-        self.path_dict_list = self._check_alignment(performance_set_paths)
+        self.path_dict_list = self._check_alignment()
 
         '''
         Main Variable
@@ -277,7 +279,10 @@ class PerformanceData:
 class XmlMidiPerformanceData(PerformanceData):
     def __init__(self, ref_path, midi_path, txt_path):
         super().__init__(ref_path, midi_path, txt_path)
-
+        
+        # need for feature extraction
+        self.xml_obj = MusicXMLDocument(self.ref_path)
+        self.xml_notes = self._get_xml_notes()
         '''
         Main Variable
         # pairs : list of pair
@@ -287,6 +292,15 @@ class XmlMidiPerformanceData(PerformanceData):
         self.pairs = self._get_pairs()
         self.emotion_number = self._get_emotion_number(midi_path.name)
     
+    def _get_xml_notes(self):
+        notes, _ = self.xml_obj.get_notes()
+        directions = self.xml_obj.get_directions()
+        time_signatures = self.xml_obj.get_time_signatures()
+
+        xml_notes = xml_utils.apply_directions_to_notes(notes, directions, time_signatures)
+
+        return xml_notes
+
     def _get_pairs(self):
         # TODO
         # need xml_notes, xml_beat_poisitions, midi_notes
