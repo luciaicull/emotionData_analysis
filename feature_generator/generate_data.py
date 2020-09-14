@@ -1,6 +1,6 @@
 
 from .arg_parser import get_parser
-from .raw_data_class import MidiMidiDataset
+from .raw_data_class import MidiMidiDataset, XmlMidiDataset
 from .feature_extraction import Extractor
 from .constant import FEATURE_LIST
 from . import utils
@@ -25,7 +25,7 @@ def generate():
         dataset = MidiMidiDataset(emotion_path, split=5)
     else:
         # score - midi matching
-        pass
+        dataset = XmlMidiDataset(emotion_path, split=0)
     
     utils.save_datafile(emotion_save_path, '5sec_split_dataset.dat', dataset)
     

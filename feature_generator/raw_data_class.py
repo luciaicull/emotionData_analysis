@@ -281,7 +281,7 @@ class XmlMidiPerformanceData(PerformanceData):
         super().__init__(ref_path, midi_path, txt_path)
         
         # need for feature extraction
-        self.xml_obj = MusicXMLDocument(self.ref_path)
+        self.xml_obj = MusicXMLDocument(str(self.ref_path))
         self.xml_notes = self._get_xml_notes()
         '''
         Main Variable
@@ -293,7 +293,7 @@ class XmlMidiPerformanceData(PerformanceData):
         self.emotion_number = self._get_emotion_number(midi_path.name)
     
     def _get_xml_notes(self):
-        notes, _ = self.xml_obj.get_notes()
+        notes = self.xml_obj.get_notes()
         directions = self.xml_obj.get_directions()
         time_signatures = self.xml_obj.get_time_signatures()
 
