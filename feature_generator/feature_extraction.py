@@ -3,7 +3,12 @@ import numpy as np
 from scipy.stats import skew, kurtosis
 from tqdm import tqdm
 
-class Extractor:
+class XmlMidiFeatureExtractor:
+    def __init__(self, set_list, feature_list):
+        self.set_list = set_list
+        
+
+class MidiMidiFeatureExtractor:
     def __init__(self, set_list, feature_list):
         self.set_list = set_list
         self.feature_key_list = feature_list
