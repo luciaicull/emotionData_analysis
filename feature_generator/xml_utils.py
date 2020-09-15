@@ -110,10 +110,8 @@ def get_dynamics(directions):
     temp_abs_key = absolute_dynamics_keywords
     temp_abs_key.append('dynamic')
 
-    absolute_dynamics = extract_directions_by_keywords(
-        directions, temp_abs_key)
-    relative_dynamics = extract_directions_by_keywords(
-        directions, relative_dynamics_keywords)
+    absolute_dynamics = extract_directions_by_keywords(directions, temp_abs_key)
+    relative_dynamics = extract_directions_by_keywords(directions, relative_dynamics_keywords)
     abs_dynamic_dummy = []
     for abs in absolute_dynamics:
         if abs.type['content'] == 'fp':
@@ -155,10 +153,7 @@ def get_dynamics(directions):
 
     relative_dynamics.sort(key=lambda x: x.xml_position)
     relative_dynamics = merge_start_end_of_direction(relative_dynamics)
-    absolute_dynamics_position = [
-        dyn.xml_position for dyn in absolute_dynamics]
-    relative_dynamics_position = [
-        dyn.xml_position for dyn in relative_dynamics]
+    absolute_dynamics_position = [dyn.xml_position for dyn in absolute_dynamics]
     cresc_name = ['crescendo', 'diminuendo']
     cresciuto_list = []
     num_relative = len(relative_dynamics)

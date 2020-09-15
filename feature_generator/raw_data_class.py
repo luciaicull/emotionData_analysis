@@ -293,7 +293,7 @@ class XmlMidiPerformanceData(PerformanceData):
         self.emotion_number = self._get_emotion_number(midi_path.name)
     
     def _get_xml_notes(self):
-        notes = self.xml_obj.get_notes()
+        notes, _ = self.xml_obj.get_notes()
         directions = self.xml_obj.get_directions()
         time_signatures = self.xml_obj.get_time_signatures()
 
@@ -305,7 +305,11 @@ class XmlMidiPerformanceData(PerformanceData):
         # TODO
         # need xml_notes, xml_beat_poisitions, midi_notes
         # or just xml-midi note pair and xml object?
-        pass
+        xml_notes = self.xml_notes
+        midi_notes = self._get_midi(str(self.midi_path))
+        match, missing = matching.read_match_file(self.txt_path)
+
+        return matching.match
 
 
 class MidiMidiPerformanceData(PerformanceData):
