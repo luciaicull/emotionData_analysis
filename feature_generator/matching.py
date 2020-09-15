@@ -106,7 +106,31 @@ def find_matching_midi_note(xml_index, xml_note, match_list, midi_notes):
     return dic
 
 def find_midi_note_index(midi_notes, start, end, pitch, ornament=False):
-    pass
+    """
+    find corresponding midi note index for one xml note
+
+    Parameters
+    -----------
+    midi_notes : list of midi note object
+    start: midi start time in match_list
+    end : midi end time in match_list
+    pitch : midi pitch in match_list (in string)
+    ornament : whether it's ornament
+
+    Returns
+    -----------
+    dictionary of midi index and pitch
+    """
+    pitch = check_pitch(pitch)
+    if not ornament:
+        for i, note in enumerate(midi_notes):
+            if (abs(note.start - start) < 0.001) and (abs(note.end - end) < 0.001) and (note.pitch == pretty_midi.note_name_to_number(pitch)):
+                return {'idx': i, 'pitch': pretty_midi.note_number_to_name(note.pitch)}
+    else:
+        for i, note in enumerate(midi_notes):
+            if (abs(note.start - start) < 0.001) and (abs(note.end - end) < 0.001) and (abs(note.pitch - pretty_midi.note_name_to_number(pitch)) <= 2):
+                return {'idx': i, 'pitch': pretty_midi.note_number_to_name(note.pitch)}
+    return -1
 
 def match_midis(ref_notes, perf_notes, corresp_list):
     pairs = []
