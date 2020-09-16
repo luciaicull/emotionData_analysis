@@ -233,14 +233,15 @@ class XmlMidiPerformanceSet(PerformanceSet):
 
         for path_dict in self.path_dict_list:
             data = XmlMidiPerformanceData(self.ref_path, path_dict['midi_path'], path_dict['match_path'])
-            emotion_number = data.emotion_number
-            pairs = self._split_pairs(data.pairs)
+            #emotion_number = data.emotion_number
+            #pairs = self._split_pairs(data.pairs)
+            #pairs = data.pairs
+            #xml_object = data.xml_obj
 
             # TODO
             # in this case, need beat tempo information in data for feature extraction
             # or at least xml object
-            performance_data = {'emotion_number':emotion_number, 'pairs':pairs}
-            performance_set_list.append(performance_data)
+            performance_set_list.append(data)
 
         return performance_set_list
     
@@ -289,7 +290,7 @@ class XmlMidiPerformanceData(PerformanceData):
                   pair -> {'ref': xml note, 'perf': corresponding E[1-5] note}
         # emotion number : e1(original), e2(sad), e3(relaxed), e4(happy), e5(anger)
         '''
-        self.pairs = self._get_pairs()
+        self.pairs, self.valid_position_pairs = self._get_pairs()
         self.emotion_number = self._get_emotion_number(midi_path.name)
     
     def _get_xml_notes(self):
@@ -309,8 +310,9 @@ class XmlMidiPerformanceData(PerformanceData):
         match, missing = matching.read_match_file(self.txt_path)
         
         pairs = matching.match_xml_midi(self.xml_notes, midi_notes, match, missing)
+        pairs, valid_position_pairs = matching.make_available_xml_midi_positions(pairs)
         # split => after feature extraction..
-        return pairs
+        return pairs, valid_position_pairs
 
 
 class MidiMidiPerformanceData(PerformanceData):
