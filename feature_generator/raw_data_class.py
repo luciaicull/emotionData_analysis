@@ -305,11 +305,12 @@ class XmlMidiPerformanceData(PerformanceData):
         # TODO
         # need xml_notes, xml_beat_poisitions, midi_notes
         # or just xml-midi note pair and xml object?
-        xml_notes = self.xml_notes
         midi_notes = self._get_midi(str(self.midi_path))
         match, missing = matching.read_match_file(self.txt_path)
-
-        return matching.match
+        
+        pairs = matching.match_xml_midi(self.xml_notes, midi_notes, match, missing)
+        # split => after feature extraction..
+        return pairs
 
 
 class MidiMidiPerformanceData(PerformanceData):

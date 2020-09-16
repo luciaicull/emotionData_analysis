@@ -1,21 +1,12 @@
 """ 
 Utilities for matching process after applying Nakamura Algorithm
 """
-
+import pretty_midi
 import csv
 
-def read_corresp(txtpath):
-    file = open(txtpath, 'r')
-    reader = csv.reader(file, dialect='excel', delimiter='\t')
-    corresp_list = []
-    for row in reader:
-        if len(row) == 1:
-            continue
-        temp_dic = {'alignID': row[0], 'alignOntime': row[1], 'alignSitch': row[2], 'alignPitch': row[3], 'alignOnvel': row[4],
-                    'refID': row[5], 'refOntime': row[6], 'refSitch': row[7], 'refPitch': row[8], 'refOnvel': row[9]}
-        corresp_list.append(temp_dic)
-
-    return corresp_list
+'''
+modules for xml note - eN note matching
+'''
 
 def read_match_file(match_path):
     f = open(match_path, 'r')
@@ -94,8 +85,10 @@ def find_matching_midi_note(xml_index, xml_note, match_list, midi_notes):
                     match['used'] = True
     
     # find trill midis
+    dic = find_trill_midis(dic, match_list, midi_notes)
 
     # find ornament midis
+    dic = find_ornament_midis(dic, xml_note.note_duration.xml_position, match_list, midi_notes)
 
     if len(dic['midi_index']) == 0:
         dic['unmatched'] = True
@@ -104,6 +97,123 @@ def find_matching_midi_note(xml_index, xml_note, match_list, midi_notes):
             match_list[idx]['used'] = True
 
     return dic
+
+
+def find_trill_midis(dic, match_list, midi_notes):
+    """
+    find possible trill midi note indices
+
+    Parameters
+    -----------
+    dic : result of match result in dictionary format
+    match_list : lines of match result in _match.txt, in dictionary(dict) format
+    midi_notes : list of midi note object
+    """
+    if len(dic['match_index']) > 1:
+        # 미디 여러 개 - xml 하나라서 match가 여러 개 뜰 경우
+        dic['is_trill'] = True
+
+        start_idx = dic['match_index'][0]
+        end_idx = dic['match_index'][-1]
+        match_id = match_list[start_idx]['xmlNoteID']
+        pitch = match_list[start_idx]['pitch']
+
+        new_match_idx = []
+
+        # find trill
+        trill_pitch = None
+        for idx in range(start_idx, end_idx + 1):
+            if idx in dic['match_index']:
+                continue
+            else:
+                if (match_list[idx]['xmlNoteID'] == match_id) or (match_list[idx]['errorIndex'] == 3):
+                    midi_idx = find_midi_note_index(
+                        midi_notes, match_list[idx]['midiStartTime'], match_list[idx]['midiEndTime'], match_list[idx]['pitch'])
+                    if midi_idx != -1:
+                        dic['midi_index'].append(midi_idx)
+                        new_match_idx.append(idx)
+                        trill_pitch = match_list[idx]['pitch']
+                        if match_list[idx]['xmlNoteID'] != match_id:
+                            dic['fixed_trill_idx'].append(midi_idx)
+                        match_list[idx]['used'] = True
+
+        # find one prev trill
+        prev_idx = start_idx - 1
+        prev = match_list[prev_idx]
+        if prev['pitch'] == trill_pitch:
+            if (prev['xmlNoteID'] == match_id) or (prev['errorIndex'] == 3):
+                midi_idx = find_midi_note_index(
+                    midi_notes, prev['midiStartTime'], prev['midiEndTime'], prev['pitch'])
+                if midi_idx != -1:
+                    dic['midi_index'].append(midi_idx)
+                    new_match_idx.append(prev_idx)
+                    if prev['xmlNoteID'] != match_id:
+                        dic['fixed_trill_idx'].append(midi_idx)
+                    prev['used'] = True
+
+        dic['match_index'] += new_match_idx
+        dic['match_index'].sort()
+        prev_midi_index = dic['midi_index']
+        dic['midi_index'] = sorted(
+            prev_midi_index, key=lambda prev_midi_index: prev_midi_index['idx'])
+    
+    return dic
+
+
+def find_ornament_midis(dic, score_time, match_list, midi_notes):
+    """
+    find possible ornament midi note indices
+
+    Parameters
+    -----------
+    dic : result of match result in dictionary format
+    score_time : score time of xml note
+    match_list : lines of match result in _match.txt, in dictionary(dict) format
+    midi_notes : list of midi note object
+    
+    """
+    if len(dic['match_index']) > 0:
+        match = match_list[dic['match_index'][0]]
+        cand_match_idx = [idx for idx, match in enumerate(
+            match_list) if match['scoreTime'] == score_time]
+        new_match_idx = []
+        for cand in cand_match_idx:
+            cand_match = match_list[cand]
+            if not cand_match['used']:
+                if (cand_match['xmlNoteID'] == match['xmlNoteID']):
+                    midi_idx = find_midi_note_index(
+                        midi_notes, cand_match['midiStartTime'], cand_match['midiEndTime'], match['pitch'], ornament=True)
+                    if midi_idx != -1:
+                        dic['midi_index'].append(midi_idx)
+                        new_match_idx.append(cand)
+                        if cand_match['xmlNoteID'] != match['xmlNoteID']:
+                            dic['fixed_trill_idx'].append(midi_idx)
+                        cand_match['used'] = True
+                        dic['is_ornament'] = True
+        dic['match_index'] += new_match_idx
+        new_match_idx = []
+        if len(dic['match_index']) >= 2:
+            for cand in cand_match_idx:
+                cand_match = match_list[cand]
+                if not cand_match['used']:
+                    if (cand_match['errorIndex'] == 3):
+                        midi_idx = find_midi_note_index(
+                            midi_notes, cand_match['midiStartTime'], cand_match['midiEndTime'], match['pitch'], ornament=True)
+                        if midi_idx != -1:
+                            dic['midi_index'].append(midi_idx)
+                            new_match_idx.append(cand)
+                            if cand_match['xmlNoteID'] != match['xmlNoteID']:
+                                dic['fixed_trill_idx'].append(midi_idx)
+                            cand_match['used'] = True
+                            dic['is_ornament'] = True
+
+        dic['match_index'] += new_match_idx
+        dic['match_index'].sort()
+        prev_midi_index = dic['midi_index']
+        dic['midi_index'] = sorted(prev_midi_index, key=lambda prev_midi_index: prev_midi_index['idx'])
+    
+    return dic
+
 
 def find_midi_note_index(midi_notes, start, end, pitch, ornament=False):
     """
@@ -131,6 +241,80 @@ def find_midi_note_index(midi_notes, start, end, pitch, ornament=False):
             if (abs(note.start - start) < 0.001) and (abs(note.end - end) < 0.001) and (abs(note.pitch - pretty_midi.note_name_to_number(pitch)) <= 2):
                 return {'idx': i, 'pitch': pretty_midi.note_number_to_name(note.pitch)}
     return -1
+
+
+def check_pitch(pitch):
+    """
+    check string pitch format and fix it
+
+    Parameters
+    -----------
+    pitch : midi string pitch
+
+    Returns
+    -----------
+    pitch : midi string pitch
+    """
+    if len(pitch) == 4:
+        base_pitch_num = pretty_midi.note_name_to_number(pitch[0]+pitch[-1])
+        if pitch[1:3] == 'bb':
+            pitch = pretty_midi.note_number_to_name(base_pitch_num-2)
+        if pitch[1:3] == '##':
+            pitch = pretty_midi.note_number_to_name(base_pitch_num+2)
+    return pitch
+
+
+def pair_transformation(xml_notes, midi_notes, index_dict_list):
+    """
+    Transform pair format from index_dict_list to original pair
+
+    Parameters
+    -----------
+    xml_notes : list of xml note object
+    midi_notes : list of midi note object
+    index_dict_list 
+            : list of dictionary
+            {'match_index': [], 'xml_index': {xml_index, xml_note.pitch[0]}, 'midi_index': [], 
+             'is_trill': False, 'is_ornament': False, 'is_overlapped': xml_note.is_overlapped, 
+             'overlap_xml_index': [], 'unmatched': False, 'fixed_trill_idx': []}
+    
+    Returns
+    -----------
+    pairs : list of dictionary
+            {'xml': xml_notes[i], 'midi': midi_notes[match_list[i]]}
+    """
+    pairs = []
+    for dic in index_dict_list:
+        xml_idx = dic['xml_index']['idx']
+        midi_idx_list = dic['midi_index']
+        if dic['unmatched']:
+            pair = []
+        else:
+            midi_idx = midi_idx_list[0]['idx']
+            pair = {'xml': xml_notes[xml_idx], 'midi': midi_notes[midi_idx]}
+
+        pairs.append(pair)
+
+    return pairs
+    
+
+'''
+modules for e1 midi - eN midi matching
+'''
+def read_corresp(txtpath):
+    file = open(txtpath, 'r')
+    reader = csv.reader(file, dialect='excel', delimiter='\t')
+    corresp_list = []
+    for row in reader:
+        if len(row) == 1:
+            continue
+        temp_dic = {'alignID': row[0], 'alignOntime': row[1], 'alignSitch': row[2], 'alignPitch': row[3], 'alignOnvel': row[4],
+                    'refID': row[5], 'refOntime': row[6], 'refSitch': row[7], 'refPitch': row[8], 'refOnvel': row[9]}
+        corresp_list.append(temp_dic)
+
+    return corresp_list
+
+
 
 def match_midis(ref_notes, perf_notes, corresp_list):
     pairs = []
