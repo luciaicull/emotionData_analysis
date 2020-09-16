@@ -3,7 +3,7 @@ Utilities for matching process after applying Nakamura Algorithm
 """
 import pretty_midi
 import csv
-
+import copy
 '''
 modules for xml note - eN note matching
 '''
@@ -296,7 +296,108 @@ def pair_transformation(xml_notes, midi_notes, index_dict_list):
         pairs.append(pair)
 
     return pairs
-    
+
+
+def make_available_xml_midi_positions(pairs):
+    available_pairs = []
+    num_pairs = len(pairs)
+    for i in range(num_pairs):
+        pair = pairs[i]
+        if not pair == []:
+            xml_note = pair['xml']
+            midi_note = pair['midi']
+            xml_pos = xml_note.note_duration.xml_position
+            time = midi_note.start
+            divisions = xml_note.state_fixed.divisions
+            if not xml_note.note_duration.is_grace_note:
+                pos_pair = {'xml_position': xml_pos, 'time_position': time, 'pitch': xml_note.pitch[1], 'index':i, 'divisions':divisions}
+                if xml_note.note_notations.is_arpeggiate:
+                    pos_pair['is_arpeggiate'] = True
+                else:
+                    pos_pair['is_arpeggiate'] = False
+                available_pairs.append(pos_pair)
+
+    available_pairs, mismatched_indexes = make_average_onset_cleaned_pair(available_pairs)
+    print('Number of mismatched notes: ', len(mismatched_indexes))
+    for index in mismatched_indexes:
+        pairs[index] = []
+
+    return pairs, available_pairs
+
+def make_average_onset_cleaned_pair(position_pairs, maximum_qpm=600):
+    length = len(position_pairs)
+    previous_position = -float("Inf")
+    previous_time = -float("Inf")
+    previous_index = 0
+    # position_pairs.sort(key=lambda x: (x.xml_position, x.pitch))
+    cleaned_list = list()
+    notes_in_chord = list()
+    mismatched_indexes = list()
+    for i in range(length):
+        pos_pair = position_pairs[i]
+        current_position = pos_pair['xml_position']
+        current_time = pos_pair['time_position']
+        if current_position > previous_position >= 0:
+            minimum_time_interval = (current_position - previous_position) / pos_pair['divisions'] / maximum_qpm * 60 + 0.001
+        else:
+            minimum_time_interval = 0
+        if current_position > previous_position and current_time > previous_time + minimum_time_interval:
+            if len(notes_in_chord) > 0:
+                average_pos_pair = copy.copy(notes_in_chord[0])
+                notes_in_chord_cleaned, average_pos_pair['time_position'] = get_average_onset_time(notes_in_chord)
+                if len(cleaned_list) == 0 or average_pos_pair['time_position'] > cleaned_list[-1]['time_position'] + (
+                        (average_pos_pair['xml_position'] - cleaned_list[-1]['xml_position']) /
+                        average_pos_pair['divisions'] / maximum_qpm * 60 + 0.01):
+                    cleaned_list.append(average_pos_pair)
+                    for note in notes_in_chord:
+                        if note not in notes_in_chord_cleaned:
+                            # print('the note is far from other notes in the chord')
+                            mismatched_indexes.append(note['index'])
+                else:
+                    # print('the onset is too close to the previous onset', average_pos_pair.xml_position, cleaned_list[-1].xml_position, average_pos_pair.time_position, cleaned_list[-1].time_position)
+                    for note in notes_in_chord:
+                        mismatched_indexes.append(note['index'])
+            notes_in_chord = list()
+            notes_in_chord.append(pos_pair)
+            previous_position = current_position
+            previous_time = current_time
+            previous_index = i
+        elif current_position == previous_position:
+            notes_in_chord.append(pos_pair)
+        else:
+            # print('the note is too close to the previous note', current_position - previous_position, current_time - previous_time)
+            # print(previous_position, current_position, previous_time, current_time)
+            mismatched_indexes.append(position_pairs[previous_index]['index'])
+            mismatched_indexes.append(pos_pair['index'])
+
+    return cleaned_list, mismatched_indexes
+
+
+def get_average_onset_time(notes_in_chord_saved, threshold=0.2):
+    # notes_in_chord: list of PosTempoPair Dictionary, len > 0
+    notes_in_chord = copy.copy(notes_in_chord_saved)
+    average_onset_time = 0
+    for pos_pair in notes_in_chord:
+        average_onset_time += pos_pair['time_position']
+        if pos_pair['is_arpeggiate']:
+            threshold = 1
+    average_onset_time /= len(notes_in_chord)
+
+    # check whether there is mis-matched note
+    deviations = list()
+    for pos_pair in notes_in_chord:
+        dev = abs(pos_pair['time_position'] - average_onset_time)
+        deviations.append(dev)
+    if max(deviations) > threshold:
+        # print(deviations)
+        if len(notes_in_chord) == 2:
+            del notes_in_chord[0:2]
+        else:
+            index = deviations.index(max(deviations))
+            del notes_in_chord[index]
+            notes_in_chord, average_onset_time = get_average_onset_time(notes_in_chord, threshold)
+
+    return notes_in_chord, average_onset_time
 
 '''
 modules for e1 midi - eN midi matching
