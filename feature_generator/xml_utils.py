@@ -1,4 +1,5 @@
 import copy
+from . import utils
 
 absolute_tempos_keywords = ['adagio', 'grave', 'lento', 'largo', 'larghetto', 'andante', 'andantino', 'moderato',
                             'allegretto', 'allegro', 'vivace', 'accarezzevole', 'languido', 'tempo giusto', 'mesto',
@@ -54,16 +55,16 @@ def apply_directions_to_notes(xml_notes, directions, time_signatures):
         note_position = note.note_duration.xml_position
 
         if num_dynamics > 0:
-            index = binary_index(absolute_dynamics_position, note_position)
+            index = utils.binary_index(absolute_dynamics_position, note_position)
             note.dynamic.absolute = absolute_dynamics[index].type['content']
             note.dynamic.absolute_position = absolute_dynamics[index].xml_position
 
         if num_tempos > 0:
-            tempo_index = binary_index(absolute_tempos_position, note_position)
+            tempo_index = utils.binary_index(absolute_tempos_position, note_position)
         # note.tempo.absolute = absolute_tempos[tempo_index].type[absolute_tempos[tempo_index].type.keys()[0]]
             note.tempo.absolute = absolute_tempos[tempo_index].type['content']
             note.tempo.recently_changed_position = absolute_tempos[tempo_index].xml_position
-        time_index = binary_index(time_signatures_position, note_position)
+        time_index = utils.binary_index(time_signatures_position, note_position)
         note.tempo.time_numerator = time_signatures[time_index].numerator
         note.tempo.time_denominator = time_signatures[time_index].denominator
         note.tempo.time_signature = time_signatures[time_index]
@@ -161,7 +162,8 @@ def get_dynamics(directions):
     for i in range(num_relative):
         rel = relative_dynamics[i]
         if len(absolute_dynamics) > 0:
-            index = binary_index(absolute_dynamics_position, rel.xml_position)
+            index = utils.binary_index(
+                absolute_dynamics_position, rel.xml_position)
             rel.previous_dynamic = absolute_dynamics[index].type['content']
             if index + 1 < len(absolute_dynamics):
                 # .type['content']
@@ -288,7 +290,7 @@ def get_tempos(directions):
                     rel.end_xml_position = next_rel.xml_position
                     break
         if len(absolute_tempos) > 0:
-            index = binary_index(absolute_tempos_position, rel.xml_position)
+            index = utils.binary_index(absolute_tempos_position, rel.xml_position)
             rel.previous_tempo = absolute_tempos[index].type['content']
             if index+1 < num_abs_tempos:
                 rel.next_tempo = absolute_tempos[index+1].type['content']
@@ -388,34 +390,3 @@ def divide_cresc_staff(note):
 
     return note
 
-
-def binary_index(alist, item):
-    first = 0
-    last = len(alist)-1
-    midpoint = 0
-
-    if(item < alist[first]):
-        return 0
-
-    while first < last:
-        midpoint = (first + last)//2
-        currentElement = alist[midpoint]
-
-        if currentElement < item:
-            if alist[midpoint+1] > item:
-                return midpoint
-            else:
-                first = midpoint + 1
-            if first == last and alist[last] > item:
-                return midpoint
-        elif currentElement > item:
-            last = midpoint - 1
-        else:
-            if midpoint + 1 == len(alist):
-                return midpoint
-            while alist[midpoint+1] == item:
-                midpoint += 1
-                if midpoint + 1 == len(alist):
-                    return midpoint
-            return midpoint
-    return last
