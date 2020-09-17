@@ -33,21 +33,57 @@ class XmlMidiFeatureExtractor:
     def extract_beat_tempo(self, performance_data):
         beat_positions = performance_data.xml_obj.get_beat_positions()
         tempos = feature_utils._cal_tempo_by_positions(beat_positions, performance_data.valid_position_pairs)
+    
         return [math.log(feature_utils.get_item_by_xml_position(tempos, note).qpm, 10) for note in performance_data.xml_notes]
 
-    
 
-    def extract_measure_tempo(self):
-        pass
+    def extract_measure_tempo(self, performance_data):
+        measure_positions = performance_data.xml_obj.get_measure_positions()
+        tempos = feature_utils._cal_tempo_by_positions(measure_positions, performance_data.valid_position_pairs)
+        
+        return [math.log(feature_utils.get_item_by_xml_position(tempos, note).qpm, 10) for note in performance_data.xml_notes], True
 
-    def extract_velocity(self):
-        pass
 
-    def extract_original_duration(self):
-        pass
+    def extract_velocity(self, performance_data):
+        features = []
+        prev_velocity = 64
+        for pair in performance_data.pairs:
+            if pair == []:
+                velocity = prev_velocity
+            else:
+                velocity = pair['midi'].velocity
+                prev_velocity = velocity
+            features.append(velocity)
+        return features
+
+    def extract_original_duration(self, performance_data):
+        features = []
+        for pair in performance_data.pairs:
+            if pair == []:
+                duration = 0
+            else:
+                note = pair['xml']
+                midi = pair['midi']
+                duration = midi.end - midi.start
+            features.append(duration)
+
+        return features, True
 
     def extract_elongated_duration(self):
-        pass
+        features = []
+        for pair in perform_data.pairs:
+            if pair == []:
+                duration = 0
+            else:
+                note = pair['xml']
+                midi = pair['midi']
+                if midi.elongated_offset_time > midi.end:
+                    duration = midi.elongated_offset_time - midi.start
+                else:
+                    duration = midi.end - midi.start
+            features.append(duration)
+
+        return features
 
         
 
