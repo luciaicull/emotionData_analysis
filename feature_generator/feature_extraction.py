@@ -6,6 +6,39 @@ from tqdm import tqdm
 class XmlMidiFeatureExtractor:
     def __init__(self, set_list, feature_list):
         self.set_list = set_list
+        self.feature_key_list = feature_list
+    
+    def _init_feature_dict(self):
+        feature_dict = dict()
+        for feature_key in self.feature_key_list:
+            feature_dict[feature_key] = []
+            if feature_key is not 'interval':
+                feature_dict['relative_'+feature_key] = []
+                feature_dict[feature_key+'_ratio'] = []
+        return feature_dict
+
+    def extract_features(self):
+        feature_data = []
+
+        for set_dict in tqdm(self.set_list):
+            set_name = set_dict['name']
+            set_list = set_dict['list']
+
+            for performance_data in set_list:
+                feature_dict = self._init_feature_dict()
+    
+    def extract_tempo(self):
+        pass
+
+    def extract_velocity(self):
+        pass
+
+    def extract_original_duration(self):
+        pass
+
+    def extract_elongated_duration(self):
+        pass
+
         
 
 class MidiMidiFeatureExtractor:
