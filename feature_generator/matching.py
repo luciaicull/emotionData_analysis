@@ -318,7 +318,7 @@ def make_available_xml_midi_positions(pairs):
                 available_pairs.append(pos_pair)
 
     available_pairs, mismatched_indexes = make_average_onset_cleaned_pair(available_pairs)
-    print('Number of mismatched notes: ', len(mismatched_indexes))
+    #print('Number of mismatched notes: ', len(mismatched_indexes))
     for index in mismatched_indexes:
         pairs[index] = []
 

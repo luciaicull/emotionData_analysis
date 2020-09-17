@@ -29,15 +29,15 @@ def generate():
         extractor = MidiMidiFeatureExtractor(dataset.set_list, FEATURE_LIST)
     else:
         # score - midi matching
-        dataset = XmlMidiDataset(emotion_path, split=0)
-        utils.save_datafile(emotion_save_path, '5sec_split_dataset.dat', dataset)
-        dataset = utils.load_datafile(emotion_save_path, '5sec_split_dataset.dat')
+        #dataset = XmlMidiDataset(emotion_path, split=0)
+        #utils.save_datafile(emotion_save_path, 'xml_midi_matched.dat', dataset)
+        dataset = utils.load_datafile(emotion_save_path, 'xml_midi_matched.dat')
         # extract features
         extractor = XmlMidiFeatureExtractor(dataset.set_list, FEATURE_LIST)
     
-    feature_data = extractor.extract_features()
+    #feature_data = extractor.extract_features()
     
-    utils.save_datafile(emotion_save_path, args.save_name, feature_data)
+    #utils.save_datafile(emotion_save_path, args.save_name, feature_data)
 
 
 

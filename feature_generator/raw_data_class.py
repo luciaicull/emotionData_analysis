@@ -55,6 +55,7 @@ class XmlMidiDataset(Dataset):
                     file_set_dict[file_name]['score'] = xml_file_path
 
         for set_name in tqdm(file_set_dict.keys()):
+            #print(set_name)
             performance_set = XmlMidiPerformanceSet(file_set_dict[set_name], self.split)
             set_dict = {'name': set_name,
                         'list': performance_set.performance_set_list}
