@@ -235,17 +235,11 @@ class XmlMidiPerformanceSet(PerformanceSet):
         for path_dict in self.path_dict_list:
             data = XmlMidiPerformanceData(self.ref_path, path_dict['midi_path'], path_dict['match_path'])
 
-            # TODO
-            # in this case, need beat tempo information in data for feature extraction
-            # or at least xml object
             performance_set_list.append(data)
 
         return performance_set_list
     
-    def _split_pairs(self, pairs):
-        # TODO
-        # split pairs into self.split seconds
-        pass
+
 
 '''
 class for ref note - E[1-5] note pairs
