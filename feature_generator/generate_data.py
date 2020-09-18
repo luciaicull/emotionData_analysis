@@ -2,7 +2,7 @@
 from .arg_parser import get_parser
 from .raw_data_class import MidiMidiDataset, XmlMidiDataset
 from .feature_extraction import MidiMidiFeatureExtractor, XmlMidiFeatureExtractor
-from .constant import FEATURE_LIST
+from .constant import MIDI_MIDI_FEATURE_LIST, XML_MIDI_FEATURE_LIST
 from . import utils
 '''
 # for debugging
@@ -26,18 +26,18 @@ def generate():
         utils.save_datafile(emotion_save_path,'5sec_split_dataset.dat', dataset)
         dataset = utils.load_datafile(emotion_save_path, '5sec_split_dataset.dat')
         # extract features
-        extractor = MidiMidiFeatureExtractor(dataset.set_list, FEATURE_LIST)
+        extractor = MidiMidiFeatureExtractor(dataset.set_list, MIDI_MIDI_FEATURE_LIST)
     else:
         # score - midi matching
-        #dataset = XmlMidiDataset(emotion_path, split=0)
-        #utils.save_datafile(emotion_save_path, 'xml_midi_matched.dat', dataset)
+        dataset = XmlMidiDataset(emotion_path)
+        utils.save_datafile(emotion_save_path, 'xml_midi_matched.dat', dataset)
         dataset = utils.load_datafile(emotion_save_path, 'xml_midi_matched.dat')
         # extract features
-        extractor = XmlMidiFeatureExtractor(dataset.set_list, FEATURE_LIST)
+        extractor = XmlMidiFeatureExtractor(dataset.set_list, XML_MIDI_FEATURE_LIST, split=8)
     
-    #feature_data = extractor.extract_features()
+    feature_data = extractor.extract_features()
     
-    #utils.save_datafile(emotion_save_path, args.save_name, feature_data)
+    utils.save_datafile(emotion_save_path, args.save_name, feature_data)
 
 
 
