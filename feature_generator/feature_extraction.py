@@ -7,17 +7,20 @@ import math
 from . import feature_utils
 
 class XmlMidiFeatureExtractor:
-    def __init__(self, set_list, feature_list):
+    def __init__(self, set_list, feature_list, split):
         self.set_list = set_list
         self.feature_key_list = feature_list
+        self.split = split      # num of measure to split. if split=0, it means no split
     
     def _init_feature_dict(self):
         feature_dict = dict()
         for feature_key in self.feature_key_list:
             feature_dict[feature_key] = []
+            '''
             if feature_key is not 'interval':
                 feature_dict['relative_'+feature_key] = []
                 feature_dict[feature_key+'_ratio'] = []
+            '''
         return feature_dict
 
     def extract_features(self):
@@ -27,21 +30,80 @@ class XmlMidiFeatureExtractor:
             set_name = set_dict['name']
             set_list = set_dict['list']
 
+            feature_set_dict = {'name':set_name, 'set':[], 'splitted_set':[]}
+            e1_feature_dic = None
+            xml_notes = None
+            # get basic features
             for performance_data in set_list:
                 feature_dict = self._init_feature_dict()
+                for feature_key in self.feature_key_list:
+                    feat_list = getattr(self, 'extract_'+feature_key)(performance_data)
+                    feature_dict[feature_key] = feat_list
+                
+                dic = {'emotion_number':performance_data.emotion_number, 'feature_dict':feature_dict}
+                feature_set_dict['set'].append(dic)
+                if performance_data.emotion_number == 1:
+                    e1_feature_dic = dic
+                    xml_notes = performance_data.xml_notes
+
+            # get e1-relative, e1-ratio, self-diff features
+            for dic in feature_set_dict['set']:
+                for feature_key in self.feature_key_list:
+                    relative_feature = self._get_relative_feature(e1_feature_dic['feature_dict'][feature_key], dic['feature_dict'][feature_key])
+                    ratio_feature = self._get_ratio_feature(e1_feature_dic['feature_dict'][feature_key], dic['feature_dict'][feature_key])
+                    diff_feature = self._get_diff_feature(dic['feature_dict'][feature_key])
+
+                    dic['feature_dict']['relative_'+feature_key] = relative_feature
+                    dic['feature_dict'][feature_key+'_ratio'] = ratio_feature
+                    dic['feature_dict'][feature_key+'_diff'] = diff_feature
+
+            feature_set_dict['set'] = sorted(feature_set_dict['set'], key=lambda feature_dict:feature_dict['emotion_number'])
+
+            # split data
+            feature_set_dict['splitted_set'] = self.split_data(xml_notes, feature_set_dict['set'])
     
+    def split_data(self, xml_notes, dic_list):
+        # parameters
+        # xml_notes : list of Note object
+        # dic : {'emotion_number':performance_data.emotion_number, 'feature_dict':feature_dict}
+        splitted_set_list = []
+
+        return splitted_set_list
+                    
+    def _get_relative_feature(self, e1_list, eN_list):
+        feature_list = []
+        for ref, infer in zip(e1_list, eN_list):
+            feature_list.append(infer-ref)
+        return feature_list
+    
+    def _get_ratio_feature(self, e1_list, eN_list):
+        feature_list = []
+        for ref, infer in zip(e1_list, eN_list):
+            if ref != 0:
+                feature_list.append(infer / ref)
+        return feature_list
+
+    def _get_diff_feature(self, eN_list):
+        feature_list = []
+        for i, _ in enumerate(eN_list):
+            if i == len(eN_list)-1:
+                break
+            feature_list.append(eN_list[i+1] - eN_list[i])
+        return feature_list
+
+
     def extract_beat_tempo(self, performance_data):
         beat_positions = performance_data.xml_obj.get_beat_positions()
         tempos = feature_utils._cal_tempo_by_positions(beat_positions, performance_data.valid_position_pairs)
     
-        return [math.log(feature_utils.get_item_by_xml_position(tempos, note).qpm, 10) for note in performance_data.xml_notes]
+        return [feature_utils.get_item_by_xml_position(tempos, note).qpm for note in performance_data.xml_notes]
 
 
     def extract_measure_tempo(self, performance_data):
         measure_positions = performance_data.xml_obj.get_measure_positions()
         tempos = feature_utils._cal_tempo_by_positions(measure_positions, performance_data.valid_position_pairs)
         
-        return [math.log(feature_utils.get_item_by_xml_position(tempos, note).qpm, 10) for note in performance_data.xml_notes], True
+        return [feature_utils.get_item_by_xml_position(tempos, note).qpm for note in performance_data.xml_notes]
 
 
     def extract_velocity(self, performance_data):
@@ -67,11 +129,11 @@ class XmlMidiFeatureExtractor:
                 duration = midi.end - midi.start
             features.append(duration)
 
-        return features, True
+        return features
 
-    def extract_elongated_duration(self):
+    def extract_elongated_duration(self, performance_data):
         features = []
-        for pair in perform_data.pairs:
+        for pair in performance_data.pairs:
             if pair == []:
                 duration = 0
             else:
