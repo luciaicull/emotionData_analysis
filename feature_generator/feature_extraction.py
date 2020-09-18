@@ -61,14 +61,45 @@ class XmlMidiFeatureExtractor:
 
             # split data
             feature_set_dict['splitted_set'] = self.split_data(xml_notes, feature_set_dict['set'])
+
+            print('')
     
     def split_data(self, xml_notes, dic_list):
+        '''
         # parameters
         # xml_notes : list of Note object
-        # dic : {'emotion_number':performance_data.emotion_number, 'feature_dict':feature_dict}
+        # dic_list : list of dic
+        #   dic : {'emotion_number':performance_data.emotion_number, 'feature_dict':feature_dict}
+        '''
+        if self.split == 0:
+            return dic_list
+
         splitted_set_list = []
 
+        for dic in dic_list:
+            note_indices = self._get_indices(xml_notes)
+            for i, start_index in enumerate(note_indices):
+                partial_dic = {'emotion_number':dic['emotion_number'], 'feature_dict':dict()}
+                for feat_key in dic['feature_dict'].keys():
+                    if i == len(note_indices) - 1:
+                        partial_dic['feature_dict'][feat_key] = dic['feature_dict'][feat_key][start_index:]
+                    else:
+                        next_index = note_indices[i+1]
+                        partial_dic['feature_dict'][feat_key] = dic['feature_dict'][feat_key][start_index:next_index]
+                splitted_set_list.append(partial_dic)
+        
         return splitted_set_list
+    
+    def _get_indices(self, xml_notes):
+        indices = []
+        cur_measure_num = 0
+        for i, note in enumerate(xml_notes):
+            if note.measure_number != cur_measure_num:
+                cur_measure_num = note.measure_number
+                
+                if cur_measure_num % self.split == 1:
+                    indices.append(i)
+        return indices
                     
     def _get_relative_feature(self, e1_list, eN_list):
         feature_list = []
