@@ -60,16 +60,63 @@ class XmlMidiFeatureExtractor:
             feature_set_dict['set'] = sorted(feature_set_dict['set'], key=lambda feature_dict:feature_dict['emotion_number'])
 
             # split data
-            feature_set_dict['splitted_set'] = self.split_data(xml_notes, feature_set_dict['set'])
+            feature_set_dict['splitted_set'] = self._split_data(xml_notes, feature_set_dict['set'])
 
-            print('')
-    
-    def split_data(self, xml_notes, dic_list):
+            # get stats
+            feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'])
+
+            feature_data.append(feature_set_dict)
+        
+        return feature_data
+
+    def _add_normalized_stats(self, dic_list):
+        '''
+        # parameters
+        # dic_list : list of dic
+        #   dic : {'emotion_number':emotion_number, 'feature_dict':feature_dict}
+        '''
+        for dic in dic_list:
+            dic['stats'] = self._get_stats(dic['feature_dict'])
+        
+        stat_keys = list(dic_list[0]['stats'].keys())
+        total_stat_list = [] # shape=(total partial dict in set, num_stats)
+        for dic in dic_list:
+            stat_list = [dic['stats'][key] for key in stat_keys]
+            total_stat_list.append(stat_list)
+        
+        scaler = StandardScaler()
+        scaler.fit(total_stat_list)
+        scaled_total_stat_list = scaler.transform(total_stat_list)
+
+        for stat_list, dic in zip(scaled_total_stat_list, dic_list):
+            dic['scaled_stats'] = dict()
+            for stat, key in zip(stat_list, stat_keys):
+                dic['scaled_stats'][key] = stat
+        
+        return dic_list
+        
+
+    def _get_stats(self, feature_dict):
+        # feature dict = {'key1':feat_list, 'key2':feat_list, ...}
+        stats = dict()
+        for key in feature_dict.keys():
+            if 'diff' in key:
+                feat_list = [feat for feat in feature_dict[key] if feat != 0]
+            else:
+                feat_list = feature_dict[key]
+            stats[key+'_mean'] = np.mean(feat_list)
+            stats[key+'_std'] = np.std(feat_list)
+            stats[key+'_skew'] = skew(feat_list)
+            stats[key+'_kurt'] = kurtosis(feat_list)
+        return stats
+
+
+    def _split_data(self, xml_notes, dic_list):
         '''
         # parameters
         # xml_notes : list of Note object
         # dic_list : list of dic
-        #   dic : {'emotion_number':performance_data.emotion_number, 'feature_dict':feature_dict}
+        #   dic : {'emotion_number':emotion_number, 'feature_dict':feature_dict}
         '''
         if self.split == 0:
             return dic_list
