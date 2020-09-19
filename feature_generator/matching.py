@@ -88,7 +88,7 @@ def find_matching_midi_note(xml_index, xml_note, match_list, midi_notes):
     dic = find_trill_midis(dic, match_list, midi_notes)
 
     # find ornament midis
-    dic = find_ornament_midis(dic, xml_note.note_duration.xml_position, match_list, midi_notes)
+    dic = find_ornament_midis(dic, score_time, match_list, midi_notes)
 
     if len(dic['midi_index']) == 0:
         dic['unmatched'] = True
