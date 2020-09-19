@@ -16,11 +16,6 @@ class XmlMidiFeatureExtractor:
         feature_dict = dict()
         for feature_key in self.feature_key_list:
             feature_dict[feature_key] = []
-            '''
-            if feature_key is not 'interval':
-                feature_dict['relative_'+feature_key] = []
-                feature_dict[feature_key+'_ratio'] = []
-            '''
         return feature_dict
 
     def extract_features(self):
@@ -65,6 +60,12 @@ class XmlMidiFeatureExtractor:
             # get stats
             feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'])
 
+
+            for i, dic in enumerate(feature_set_dict['splitted_set']):
+                if math.isnan(dic['scaled_stats']['original_duration_ratio_mean']):
+                    print(set_name, dic['emotion_number'], len(
+                        dic['feature_dict']['beat_tempo']))
+            
             feature_data.append(feature_set_dict)
         
         return feature_data
@@ -127,8 +128,8 @@ class XmlMidiFeatureExtractor:
         for dic in dic_list:
             indices_bucket = self._get_indices(xml_notes)
 
-            for bucket in indices_bucket:
-                partial_dic = {'emotion_number':dic['emotion_number'], 'feature_dict':dict()}
+            for i, bucket in enumerate(indices_bucket):
+                partial_dic = {'bucket_index':i, 'emotion_number':dic['emotion_number'], 'feature_dict':dict()}
                 for feat_key in dic['feature_dict'].keys():
                     partial_dic['feature_dict'][feat_key] = []
 
@@ -158,16 +159,6 @@ class XmlMidiFeatureExtractor:
             indices_bucket = indices_bucket[:-1]
 
         return indices_bucket
-        '''
-        cur_measure_num = 0
-        for i, note in enumerate(xml_notes):
-            if note.measure_number != cur_measure_num:
-                cur_measure_num = note.measure_number
-                
-                if cur_measure_num % self.split == 1:
-                    indices.append(i)
-        return indices
-        '''
                     
     def _get_relative_feature(self, e1_list, eN_list):
         feature_list = []
