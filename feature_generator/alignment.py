@@ -14,10 +14,7 @@ import os
 import subprocess
 
 from .constant import ALIGN_DIR
-'''
-# for debugging
-from constant import ALIGN_DIR
-'''
+
 class AlignmentTool:
     def __init__(self, ref_path, target_path_list):
         '''
