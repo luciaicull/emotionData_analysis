@@ -3,12 +3,7 @@ from .alignment import MidiMidiAlignmentTool, XmlMidiAlignmentTool
 from . import matching, xml_utils
 from .midi_utils import midi_utils
 from .musicxml_parser import MusicXMLDocument
-'''
-# for debugging
-from alignment import MidiMidiAlignmentTool
-import matching
-from midi_utils import midi_utils
-'''
+
 from tqdm import tqdm
 from abc import abstractmethod
 
@@ -231,7 +226,7 @@ class XmlMidiPerformanceSet(PerformanceSet):
 
     def _make_performance_set(self):
         performance_set_list = []
-
+        #print(self.infer_path_list[0].name[:-len('.E0.mid')])
         for path_dict in self.path_dict_list:
             data = XmlMidiPerformanceData(self.ref_path, path_dict['midi_path'], path_dict['match_path'])
 
@@ -281,7 +276,7 @@ class XmlMidiPerformanceData(PerformanceData):
                   pair -> {'ref': xml note, 'perf': corresponding E[1-5] note}
         # emotion number : e1(original), e2(sad), e3(relaxed), e4(happy), e5(anger)
         '''
-        self.pairs, self.valid_position_pairs = self._get_pairs()
+        self.pairs, self.valid_position_pairs, self.missing_pair_num = self._get_pairs()
         self.emotion_number = self._get_emotion_number(midi_path.name)
     
     def _get_xml_notes(self):
@@ -303,7 +298,14 @@ class XmlMidiPerformanceData(PerformanceData):
         pairs = matching.match_xml_midi(self.xml_notes, midi_notes, match, missing)
         pairs, valid_position_pairs = matching.make_available_xml_midi_positions(pairs)
         # split => after feature extraction..
-        return pairs, valid_position_pairs
+
+        count = 0
+        for pair in pairs:
+            if pair == []:
+                count += 1
+        #print(str(count), ' / ', str(len(self.xml_notes)))
+
+        return pairs, valid_position_pairs, count
 
 
 class MidiMidiPerformanceData(PerformanceData):
