@@ -100,10 +100,11 @@ class XmlMidiFeatureExtractor:
         # feature dict = {'key1':feat_list, 'key2':feat_list, ...}
         stats = dict()
         for key in feature_dict.keys():
+            feat_list = [feat for feat in feature_dict[key] if feat != None]
+
             if 'diff' in key:
-                feat_list = [feat for feat in feature_dict[key] if feat != 0]
-            else:
-                feat_list = feature_dict[key]
+                feat_list = [feat for feat in feat_list if feat != 0]
+
             stats[key+'_mean'] = np.mean(feat_list)
             stats[key+'_std'] = np.std(feat_list)
             stats[key+'_skew'] = skew(feat_list)
@@ -124,21 +125,40 @@ class XmlMidiFeatureExtractor:
         splitted_set_list = []
 
         for dic in dic_list:
-            note_indices = self._get_indices(xml_notes)
-            for i, start_index in enumerate(note_indices):
+            indices_bucket = self._get_indices(xml_notes)
+
+            for bucket in indices_bucket:
                 partial_dic = {'emotion_number':dic['emotion_number'], 'feature_dict':dict()}
                 for feat_key in dic['feature_dict'].keys():
-                    if i == len(note_indices) - 1:
-                        partial_dic['feature_dict'][feat_key] = dic['feature_dict'][feat_key][start_index:]
-                    else:
-                        next_index = note_indices[i+1]
-                        partial_dic['feature_dict'][feat_key] = dic['feature_dict'][feat_key][start_index:next_index]
+                    partial_dic['feature_dict'][feat_key] = []
+
+                for note_index in bucket:
+                    for feat_key in dic['feature_dict'].keys():
+                        if 'diff' in feat_key and note_index == len(xml_notes)-1:
+                            continue
+                        partial_dic['feature_dict'][feat_key].append(dic['feature_dict'][feat_key][note_index])
                 splitted_set_list.append(partial_dic)
-        
+
         return splitted_set_list
     
     def _get_indices(self, xml_notes):
-        indices = []
+        max_measure = 0
+        for note in xml_notes:
+            if note.measure_number > max_measure:
+                max_measure = note.measure_number
+
+        bucket_len = math.ceil(max_measure / self.split)
+        indices_bucket = [[] for _ in range(bucket_len)]
+        
+        for i, note in enumerate(xml_notes):
+            b = (int)((note.measure_number - 1) / self.split)
+            indices_bucket[b].append(i)
+
+        if len(indices_bucket[-1]) == 1:
+            indices_bucket = indices_bucket[:-1]
+
+        return indices_bucket
+        '''
         cur_measure_num = 0
         for i, note in enumerate(xml_notes):
             if note.measure_number != cur_measure_num:
@@ -147,6 +167,7 @@ class XmlMidiFeatureExtractor:
                 if cur_measure_num % self.split == 1:
                     indices.append(i)
         return indices
+        '''
                     
     def _get_relative_feature(self, e1_list, eN_list):
         feature_list = []
@@ -159,6 +180,8 @@ class XmlMidiFeatureExtractor:
         for ref, infer in zip(e1_list, eN_list):
             if ref != 0:
                 feature_list.append(infer / ref)
+            else:
+                feature_list.append(None)
         return feature_list
 
     def _get_diff_feature(self, eN_list):
