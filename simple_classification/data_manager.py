@@ -37,24 +37,7 @@ class RawDataLoader(object):
         x, y = self.make_X_and_Y(data_list, stat, x_keys)
         return x, y
 
-    '''
-    def split_data(self, test_list, valid_list):
-        train_data = []
-        valid_data = []
-        test_data = []
-        
-        for dicts in self.dict_data:
-            name = dicts[0]['name'] + '.' + dicts[0]['performer']
-            if name in test_list:
-                test_data.append(dicts)
-            elif name in valid_list:
-                valid_data.append(dicts)
-            else:
-                train_data.append(dicts)
 
-        return train_data, valid_data, test_data
-
-    '''
     def make_X_and_Y(self, data, stat, x_keys):
         X = []
         Y = []
