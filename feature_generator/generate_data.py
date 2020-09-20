@@ -4,14 +4,7 @@ from .raw_data_class import MidiMidiDataset, XmlMidiDataset
 from .feature_extraction import MidiMidiFeatureExtractor, XmlMidiFeatureExtractor
 from .constant import MIDI_MIDI_FEATURE_LIST, XML_MIDI_FEATURE_LIST
 from . import utils
-'''
-# for debugging
-from arg_parser import get_parser
-from raw_data_class import MidiMidiDataset
-from feature_extraction import Extractor
-from constant import FEATURE_LIST
-import utils
-'''
+
 def generate():
     p = get_parser()
     args = p.parse_args()
@@ -33,7 +26,7 @@ def generate():
         utils.save_datafile(emotion_save_path, 'xml_midi_matched.dat', dataset)
         dataset = utils.load_datafile(emotion_save_path, 'xml_midi_matched.dat')
         # extract features
-        extractor = XmlMidiFeatureExtractor(dataset.set_list, XML_MIDI_FEATURE_LIST, split=8)
+        extractor = XmlMidiFeatureExtractor(dataset.set_list, XML_MIDI_FEATURE_LIST, split=16)
     
     feature_data = extractor.extract_features()
     
