@@ -28,7 +28,7 @@ class Analyser():
         feature_scores = pd.concat([dfcolumns, dfscores], axis=1)
         feature_scores.columns = ['Feature Name', 'Score']
         
-        feature_scores.nlargest(20, 'Score').plot.barh(x='Feature Name', y='Score', title='Select K Best', figsize=(20,10))
+        feature_scores.nlargest(40, 'Score').plot.barh(x='Feature Name', y='Score', title='Select K Best', figsize=(20,10))
         plt.savefig('./kbest.png')
 
     def _extra_trees(self):
@@ -37,7 +37,7 @@ class Analyser():
 
         feat_importances = pd.Series(model.feature_importances_, index=self.feature_list)
         
-        feat_importances.nlargest(20).plot(kind='barh', title='Extra Tree Classifier', figsize=(20,10))
+        feat_importances.nlargest(40).plot(kind='barh', title='Extra Tree Classifier', figsize=(20,10))
         plt.savefig('./extra_trees.png')
 
 
