@@ -16,21 +16,20 @@ def load_datafile(path, name):
 def make_X_Y(feature_data):
     x = []
     y = []
-    feature_key_list = feature_data[0]['set'][0]['scaled_stats'].keys()
+    exist_keys = list(feature_data[0]['set'][0]['scaled_stats'].keys())
+    feature_key_list = [key for key in exist_keys if ('_diff' in key) or ('_ratio' in key) or ('relative_' in key)]
 
     for emotion_set in feature_data:
         set_name = emotion_set['name']
-        eN_feature_set_list = emotion_set['set']
-        for eN_feature_set in eN_feature_set_list:
-            emotion_number = eN_feature_set['emotion_number']
-            scaled_stats = eN_feature_set['scaled_stats']
-            fragment_num = len(list(scaled_stats.values())[0])
+        feature_set_list = emotion_set['set']
+        for feature_set in feature_set_list:
+            emotion_number = feature_set['emotion_number']
+            scaled_stats = feature_set['scaled_stats']
             
-            for i in range(0, fragment_num):
-                data = []
-                for key in feature_key_list:
-                    data.append(scaled_stats[key][i])
-                x.append(data)
-                y.append(emotion_number)
+            data = []
+            for key in feature_key_list:
+                data.append(scaled_stats[key])
+            x.append(data)
+            y.append(emotion_number)
 
     return np.array(x), np.array(y), feature_key_list
