@@ -1,3 +1,9 @@
+XMLMIDI_FEATURE_KEYS = ['beat_tempo_ratio_std', 'relative_velocity_kurt', 'velocity_ratio_std', 'relative_velocity_std', 
+
+                        'relative_beat_tempo_mean', 'beat_tempo_ratio_mean', 'relative_original_duration_mean', 
+                        'original_duration_ratio_mean', 'relative_velocity_mean', 'velocity_ratio_mean']
+
+
 MIDIMIDI_FEATURE_KEYS = ['relative_velocity_std', 'relative_velocity_kurt',
                          'velocity_ratio_std', 'velocity_ratio_kurt', 
 

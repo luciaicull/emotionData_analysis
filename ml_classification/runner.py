@@ -2,9 +2,9 @@ from sklearn.model_selection import KFold
 from sklearn import svm
 import pandas as pd
 import numpy as np
+import csv
 
 from . import utils
-from .constants import MIDIMIDI_FEATURE_KEYS
 
 class Runner():
     def __init__(self, total_data, train_data, test_data):
@@ -12,12 +12,39 @@ class Runner():
         self.train_data = train_data
         self.test_data = test_data
 
-        self.total_X, self.total_Y = utils.make_X_Y(self.total_data)
-        self.train_X, self.train_Y = utils.make_X_Y(self.train_data)
-        self.test_X, self.test_Y = utils.make_X_Y(self.test_data)
+        #self.total_X, self.total_Y = utils.make_X_Y(self.total_data)
+        #self.train_X, self.train_Y = utils.make_X_Y(self.train_data)
+        #self.test_X, self.test_Y = utils.make_X_Y(self.test_data)
+        self.train_X, self.train_Y, _ = utils.make_X_Y_for_xmlmidi(self.train_data)
+        self.test_X, self.test_Y, self.test_info = utils.make_X_Y_for_xmlmidi(self.test_data)
 
         self.svm_options = {'C': 10, 'kernel': 'linear',
                             'decision_function_shape': 'ovr', 'gamma': 'scale'}
+
+    def test_fragment(self):
+        clf = svm.SVC(C=self.svm_options['C'], kernel=self.svm_options['kernel'], decision_function_shape=self.svm_options['decision_function_shape'], gamma=self.svm_options['gamma'])
+        clf.fit(self.train_X, self.train_Y)
+
+        predicted = clf.predict(self.test_X)
+        
+        total_accuracy = clf.score(self.test_X, self.test_Y)
+        
+        total_result = self._get_total_result(predicted, self.test_Y)
+        
+        print("total_accuracy : %0.3f" % total_accuracy)
+        self._print_total_result(total_result)
+
+        print("")
+        self._print_correct_fragments(predicted, self.test_Y, self.test_info)
+
+    def _print_correct_fragments(self, prediction, y_list, info_list):
+        f = open('./correct_fragment_result.csv', 'w', encoding='utf-8')
+        wr = csv.writer(f)
+        wr.writerow(['set name', 'bucket', 'start measure', 'end measure', 'emotion number'])
+        for pred, y, info in zip(prediction, y_list, info_list):
+            if pred == y:
+                wr.writerow([info[0], info[1], info[1]*8+1, (info[1]+1)*8+1, y])
+        f.close()        
 
     def run_svm(self):
         kf = KFold(n_splits=5)

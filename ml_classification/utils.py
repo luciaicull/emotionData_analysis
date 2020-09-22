@@ -1,8 +1,9 @@
 import _pickle as cPickle
 import pickle
 import numpy as np
+import math
 
-from .constants import TEST_LIST, MIDIMIDI_FEATURE_KEYS
+from .constants import TEST_LIST, MIDIMIDI_FEATURE_KEYS, XMLMIDI_FEATURE_KEYS
 
 def save_datafile(path, name, data):
     with open(path.joinpath(name), "wb") as f:
@@ -22,7 +23,6 @@ def split_train_test(feature_data):
 
     for emotion_set in feature_data:
         set_name = emotion_set['name']
-        eN_feature_set_list = emotion_set['set']
         if set_name in TEST_LIST:
             test_data.append(emotion_set)
         else:
@@ -36,20 +36,54 @@ def split_train_test(feature_data):
 def make_X_Y(feature_data):
     x = []
     y = []
-
+    feature_key_list = XMLMIDI_FEATURE_KEYS 
+    #feature_key_list = MIDIMIDI_FEATURE_KEYS
+    
     for emotion_set in feature_data:
         set_name = emotion_set['name']
-        eN_feature_set_list = emotion_set['set']
+        # eN_feature_set_list = emotion_set['set']
+        eN_feature_set_list = emotion_set['splitted_set']
         for eN_feature_set in eN_feature_set_list:
             emotion_number = eN_feature_set['emotion_number']
             scaled_stats = eN_feature_set['scaled_stats']
-            fragment_num = len(list(scaled_stats.values())[0])
+            #fragment_num = len(list(scaled_stats.values())[0])
 
-            for i in range(0, fragment_num):    # in no_split, fragment_num=1
-                data = []
-                for key in MIDIMIDI_FEATURE_KEYS:
-                    data.append(scaled_stats[key][i])
-                x.append(data)
-                y.append(emotion_number)
+            #for i in range(0, fragment_num):    # in no_split, fragment_num=1
+            data = []
+            for key in feature_key_list:
+                #data.append(scaled_stats[key][i])
+                data.append(scaled_stats[key])
+            x.append(data)
+            y.append(emotion_number)
 
     return np.array(x), np.array(y)
+
+def make_X_Y_for_xmlmidi(feature_data):
+    x = []
+    y = []
+    info = []
+    feature_key_list = XMLMIDI_FEATURE_KEYS
+
+    for emotion_set in feature_data:
+        set_name = emotion_set['name']
+        feature_set_list = emotion_set['splitted_set']
+        for feature_set in feature_set_list:
+            emotion_number = feature_set['emotion_number']
+            scaled_stats = feature_set['scaled_stats']
+
+            detect_NaN = False
+            data = []
+            for key in feature_key_list:
+                if math.isnan(scaled_stats[key]):
+                    detect_NaN = True
+                    break
+                else:
+                    data.append(scaled_stats[key])
+            if detect_NaN:
+                continue
+            else:
+                x.append(data)
+                y.append(emotion_number)
+                if 'bucket_index' in feature_set.keys():
+                    info.append((set_name, feature_set['bucket_index']))
+    return np.array(x), np.array(y), info
