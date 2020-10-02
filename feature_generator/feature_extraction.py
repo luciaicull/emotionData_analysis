@@ -64,16 +64,11 @@ class XmlMidiFeatureExtractor:
             # get stats
             feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'], set_name)
 
-
-            for i, dic in enumerate(feature_set_dict['splitted_set']):
-                if math.isnan(dic['scaled_stats']['original_duration_ratio_mean']):
-                    print(set_name, dic['emotion_number'], len(
-                        dic['feature_dict']['beat_tempo']))
-            
             feature_data.append(feature_set_dict)
         
         return feature_data
 
+    # TODO
     def _add_normalized_stats(self, dic_list, set_name):
         '''
         # parameters
@@ -102,7 +97,8 @@ class XmlMidiFeatureExtractor:
                 dic['scaled_stats'][key] = stat
         
         return dic_list
-        
+
+    # TODO   
     def _get_stats(self, feature_dict, set_name, bucket_index):
         # feature dict = {'key1':feat_list, 'key2':feat_list, ...}
         stats = dict()
@@ -121,7 +117,7 @@ class XmlMidiFeatureExtractor:
             stats[key+'_kurt'] = kurtosis(feat_list)
         return stats
 
-
+    # TODO
     def _split_data(self, xml_notes, dic_list):
         '''
         # parameters
@@ -151,6 +147,7 @@ class XmlMidiFeatureExtractor:
 
         return splitted_set_list
     
+    # TODO
     def _get_indices(self, xml_notes):
         max_measure = 0
         for note in xml_notes:
