@@ -85,5 +85,5 @@ def make_X_Y_for_xmlmidi(feature_data):
                 x.append(data)
                 y.append(emotion_number)
                 if 'bucket_index' in feature_set.keys():
-                    info.append((set_name, feature_set['bucket_index']))
+                    info.append((set_name, feature_set['bucket_index'], feature_set['total_bucket']))
     return np.array(x), np.array(y), info
