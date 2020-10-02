@@ -14,11 +14,11 @@ class Tempo:
         string += ' to ' + str(self.end_xml)
         return string
 
-def _cal_tempo_by_positions(beats, position_pairs):
+def _cal_tempo_by_positions(positions, position_pairs):
         """ Returns list of Tempo objects
 
         Args:
-            beats (1-D list): list of beats in piece
+            positions (1-D list): list of positions in piece (ex. beat, measure)
             position_pairs (1-D list): list of valid pair dictionaries {xml_note, midi_note} 
         
         Returns:
@@ -30,17 +30,17 @@ def _cal_tempo_by_positions(beats, position_pairs):
             
         """
         tempos = []
-        num_beats = len(beats)
+        num_positions = len(positions)
         previous_end = 0
 
-        for i in range(num_beats-1):
-            beat = beats[i]
-            current_pos_pair = get_item_by_xml_position(position_pairs, beat)
+        for i in range(num_positions-1):
+            position = positions[i]
+            current_pos_pair = get_item_by_xml_position(position_pairs, position)
             if current_pos_pair['xml_position'] < previous_end:
                 continue
 
-            next_beat = beats[i+1]
-            next_pos_pair = get_item_by_xml_position(position_pairs, next_beat)
+            next_position = positions[i+1]
+            next_pos_pair = get_item_by_xml_position(position_pairs, next_position)
 
             if next_pos_pair['xml_position'] == previous_end:
                 continue
@@ -57,8 +57,7 @@ def _cal_tempo_by_positions(beats, position_pairs):
                 (next_time - cur_time) / cur_divisions * 60
 
             if qpm > 1000:
-                print('need check: qpm is ' + str(qpm) +
-                    ', current xml_position is ' + str(cur_xml))
+                print('need check: qpm is ' + str(qpm) + ', current xml_position is ' + str(cur_xml))
             tempo = Tempo(cur_xml, qpm, cur_time, next_xml, next_time)
             tempos.append(tempo)        #
             previous_end = next_pos_pair['xml_position']
