@@ -44,10 +44,8 @@ def match_xml_midi(xml_notes, midi_notes, match_list, missing_xml_list):
     """
     index_dict_list = []
     for xml_index, xml_note in enumerate(xml_notes):
-        dic = find_matching_midi_note(xml_index, xml_note, match_list, midi_notes)
+        dic, match_list = find_matching_midi_note(xml_index, xml_note, match_list, midi_notes)
         index_dict_list.append(dic)
-        #print(dic)
-
     pairs = pair_transformation(xml_notes, midi_notes, index_dict_list)
     return pairs
 
@@ -96,7 +94,7 @@ def find_matching_midi_note(xml_index, xml_note, match_list, midi_notes):
         for idx in dic['match_index']:
             match_list[idx]['used'] = True
 
-    return dic
+    return dic, match_list
 
 
 def find_trill_midis(dic, match_list, midi_notes):
