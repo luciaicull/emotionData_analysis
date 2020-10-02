@@ -336,7 +336,7 @@ def make_average_onset_cleaned_pair(position_pairs, maximum_qpm=600):
         current_position = pos_pair['xml_position']
         current_time = pos_pair['time_position']
         if current_position > previous_position >= 0:
-            minimum_time_interval = (current_position - previous_position) / pos_pair['divisions'] / maximum_qpm * 60 + 0.001
+            minimum_time_interval = (current_position - previous_position) / pos_pair['divisions'] / maximum_qpm * 60 + 0.01
         else:
             minimum_time_interval = 0
         if current_position > previous_position and current_time > previous_time + minimum_time_interval:
