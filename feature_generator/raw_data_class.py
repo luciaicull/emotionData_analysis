@@ -270,6 +270,7 @@ class XmlMidiPerformanceData(PerformanceData):
         # need for feature extraction
         self.xml_obj = MusicXMLDocument(str(self.ref_path))
         self.xml_notes = self._get_xml_notes()
+        self.midi_notes = self._get_midi(str(self.midi_path))
         '''
         Main Variable
         # pairs : list of pair
@@ -278,6 +279,8 @@ class XmlMidiPerformanceData(PerformanceData):
         '''
         self.pairs, self.valid_position_pairs, self.missing_pair_num = self._get_pairs()
         self.emotion_number = self._get_emotion_number(midi_path.name)
+        self.matched_result = None
+        
     
     def _get_xml_notes(self):
         notes, _ = self.xml_obj.get_notes()
@@ -292,10 +295,11 @@ class XmlMidiPerformanceData(PerformanceData):
         # TODO
         # need xml_notes, xml_beat_poisitions, midi_notes
         # or just xml-midi note pair and xml object?
-        midi_notes = self._get_midi(str(self.midi_path))
+        midi_notes = self.midi_notes
         match, missing = matching.read_match_file(self.txt_path)
-        
+        #print(self.midi_path)
         pairs = matching.match_xml_midi(self.xml_notes, midi_notes, match, missing)
+
         pairs, valid_position_pairs = matching.make_available_xml_midi_positions(pairs)
         # split => after feature extraction..
 
@@ -304,6 +308,7 @@ class XmlMidiPerformanceData(PerformanceData):
             if pair == []:
                 count += 1
         #print(str(count), ' / ', str(len(self.xml_notes)))
+        self.matched_result = {'unmatched_xml': count, 'total_xml':len(self.xml_notes)}
 
         return pairs, valid_position_pairs, count
 
@@ -320,9 +325,10 @@ class MidiMidiPerformanceData(PerformanceData):
         '''
         self.pairs = self._get_pairs()
         self.emotion_number = self._get_emotion_number(midi_path.name)
+        self.midi_notes = self._get_midi(str(self.midi_path))
     
     def _get_pairs(self):
         ref_notes = self._get_midi(str(self.ref_path))
-        perf_notes = self._get_midi(str(self.midi_path))
+        perf_notes = self.midi_notes
         corresp = matching.read_corresp(self.txt_path)
         return matching.match_midis(ref_notes, perf_notes, corresp)
