@@ -18,8 +18,8 @@ def _cal_tempo_by_positions(positions, position_pairs):
         """ Returns list of Tempo objects
 
         Args:
-            positions (1-D list): list of positions in piece (ex. beat, measure)
-            position_pairs (1-D list): list of valid pair dictionaries {xml_note, midi_note} 
+            positions (1-D list): list of xml positions in piece (ex. beat, measure)
+            position_pairs (1-D list): list of valid pair dictionaries {'xml_position', 'time_position', 'pitch', 'index', 'divisions'}
         
         Returns:
             tempos (1-D list): list of .Tempo object
