@@ -35,7 +35,11 @@ class XmlMidiFeatureExtractor:
                     feat_list = getattr(self, 'extract_'+feature_key)(performance_data)
                     feature_dict[feature_key] = feat_list
                 
-                dic = {'emotion_number':performance_data.emotion_number, 'feature_dict':feature_dict}
+                xml_notes = sorted(performance_data.xml_notes, key=lambda note:note.measure_number)
+                total_measure = xml_notes[-1].measure_number
+
+                dic = {'emotion_number':performance_data.emotion_number, 'total_measure':total_measure,
+                       'feature_dict':feature_dict}
                 feature_set_dict['set'].append(dic)
                 if performance_data.emotion_number == 1:
                     e1_feature_dic = dic
@@ -58,7 +62,7 @@ class XmlMidiFeatureExtractor:
             feature_set_dict['splitted_set'] = self._split_data(xml_notes, feature_set_dict['set'])
 
             # get stats
-            feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'])
+            feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'], set_name)
 
 
             for i, dic in enumerate(feature_set_dict['splitted_set']):
@@ -70,14 +74,17 @@ class XmlMidiFeatureExtractor:
         
         return feature_data
 
-    def _add_normalized_stats(self, dic_list):
+    def _add_normalized_stats(self, dic_list, set_name):
         '''
         # parameters
         # dic_list : list of dic
         #   dic : {'emotion_number':emotion_number, 'feature_dict':feature_dict}
         '''
         for dic in dic_list:
-            dic['stats'] = self._get_stats(dic['feature_dict'])
+            if 'bucket_index' in dic.keys():
+                dic['stats'] = self._get_stats(dic['feature_dict'], set_name, dic['bucket_index'])
+            else:
+                dic['stats'] = self._get_stats(dic['feature_dict'], set_name, 0)
         
         stat_keys = list(dic_list[0]['stats'].keys())
         total_stat_list = [] # shape=(total partial dict in set, num_stats)
@@ -96,8 +103,7 @@ class XmlMidiFeatureExtractor:
         
         return dic_list
         
-
-    def _get_stats(self, feature_dict):
+    def _get_stats(self, feature_dict, set_name, bucket_index):
         # feature dict = {'key1':feat_list, 'key2':feat_list, ...}
         stats = dict()
         for key in feature_dict.keys():
@@ -105,6 +111,9 @@ class XmlMidiFeatureExtractor:
 
             if 'diff' in key:
                 feat_list = [feat for feat in feat_list if feat != 0]
+            
+            #if feat_list == []:
+            #    print(set_name, key, bucket_index)
 
             stats[key+'_mean'] = np.mean(feat_list)
             stats[key+'_std'] = np.std(feat_list)
@@ -129,7 +138,7 @@ class XmlMidiFeatureExtractor:
             indices_bucket = self._get_indices(xml_notes)
 
             for i, bucket in enumerate(indices_bucket):
-                partial_dic = {'bucket_index':i, 'emotion_number':dic['emotion_number'], 'feature_dict':dict()}
+                partial_dic = {'bucket_index':i+1, 'emotion_number':dic['emotion_number'], 'feature_dict':dict(), 'total_bucket':len(indices_bucket)}
                 for feat_key in dic['feature_dict'].keys():
                     partial_dic['feature_dict'][feat_key] = []
 
@@ -237,6 +246,37 @@ class XmlMidiFeatureExtractor:
                     duration = midi.end - midi.start
             features.append(duration)
 
+        return features
+    
+    def extract_onset_timing(self, performance_data):
+        features = []
+        '''
+        for note in performance_data.midi_notes:
+            features.append(note.start)
+        '''
+        for pair in performance_data.pairs:
+            if pair == []:
+                timing = -1
+            else:
+                timing = pair['midi'].start
+            features.append(timing)
+        return features
+    
+    def extract_IOI(self, performance_data):
+        features = []
+        onset_timings = self.extract_onset_timing(performance_data)
+        '''
+        for i, onset in enumerate(onset_timings):
+            if i < len(onset_timings)-1:
+                features.append(onset_timings[i+1] - onset_timings[i])
+        '''
+        for i, onset in enumerate(onset_timings):
+            if i < len(onset_timings) - 1:
+                if onset_timings[i+1] == -1 or onset_timings[i] == -1:
+                    ioi = 0
+                else:
+                    ioi = onset_timings[i+1] - onset_timings[i]
+            features.append(ioi)
         return features
 
         
