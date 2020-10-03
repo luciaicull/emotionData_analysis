@@ -6,32 +6,43 @@ import math
 from matplotlib import pyplot as plt
 
 from . import feature_utils
+from .feature_data_class import FeatureDataset
 
 class XmlMidiFeatureExtractor:
     def __init__(self, set_list, feature_list):
         self.set_list = set_list
         self.feature_key_list = feature_list
         #self.split = split      # num of measure to split. if split=0, it means no split
-    
+    '''
     def _init_feature_dict(self):
         feature_dict = dict()
         for feature_key in self.feature_key_list:
             feature_dict[feature_key] = []
         return feature_dict
-
+    '''
     def extract_features(self):
-        feature_data = []
+        #feature_data = []
+        dataset = FeatureDataset(self.set_list, self.feature_key_list)
 
-        for set_dict in tqdm(self.set_list):
+        for set_dict in tqdm(dataset.set_list):
+            #set_name = set_dict['name']
+            #set_list = set_dict['list']
             set_name = set_dict['name']
-            set_list = set_dict['list']
+            data_list = set_dict['data_list']
 
             #feature_set_dict = {'name':set_name, 'set':[], 'splitted_set':[]}
-            feature_set_dict = {'name':set_name, 'set':[]}
+            #feature_set_dict = {'name':set_name, 'set':[]}
             e1_feature_dic = None
             xml_notes = None
             # get basic features
-            for performance_data in set_list:
+            #for performance_data in set_list:
+            for data_class in data_list:
+                for feature_key in self.feature_key_list:
+                    feat_list = getattr(self, 'extract_'+feature_key)(data_class.performance_data)
+                    data_class.feature_data[feature_key] = feat_list
+                if data_class.emotion_number == 1:
+                    e1_class = data_class
+                '''
                 feature_dict = self._init_feature_dict()
                 for feature_key in self.feature_key_list:
                     feat_list = getattr(self, 'extract_'+feature_key)(performance_data)
@@ -46,8 +57,18 @@ class XmlMidiFeatureExtractor:
                 if performance_data.emotion_number == 1:
                     e1_feature_dic = dic
                     xml_notes = performance_data.xml_notes
-
+                '''
             # get e1-relative, e1-ratio, self-diff features
+            for data_class in data_list:
+                for feature_key in self.feature_key_list:
+                    relative_feature = self._get_relative_feature(e1_class.feature_data[feature_key], data_class.feature_data[feature_key])
+                    ratio_feature = self._get_ratio_feature(e1_class.feature_data[feature_key], data_class.feature_data[feature_key])
+                    diff_feature = self._get_diff_feature(data_class.feature_data[feature_key])
+
+                    data_class.feature_data['relative_'+feature_key] = relative_feature
+                    data_class.feature_data[feature_key+'_ratio'] = ratio_feature
+                    data_class.feature_data[feature_key+'_diff'] = diff_feature
+            '''
             for dic in feature_set_dict['set']:
                 for feature_key in self.feature_key_list:
                     relative_feature = self._get_relative_feature(e1_feature_dic['feature_dict'][feature_key], dic['feature_dict'][feature_key])
@@ -57,9 +78,10 @@ class XmlMidiFeatureExtractor:
                     dic['feature_dict']['relative_'+feature_key] = relative_feature
                     dic['feature_dict'][feature_key+'_ratio'] = ratio_feature
                     dic['feature_dict'][feature_key+'_diff'] = diff_feature
-
+            '''
+            '''
             feature_set_dict['set'] = sorted(feature_set_dict['set'], key=lambda feature_dict:feature_dict['emotion_number'])
-
+            '''
             '''
             # split data
             feature_set_dict['splitted_set'] = self._split_data(xml_notes, feature_set_dict['set'])
@@ -67,9 +89,10 @@ class XmlMidiFeatureExtractor:
             # get stats
             feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'], set_name)
             '''
-            feature_data.append(feature_set_dict)
+            #feature_data.append(feature_set_dict)
         
-        return feature_data
+        #return feature_data
+        return dataset
     '''
     # TODO
     def _add_normalized_stats(self, dic_list, set_name):
@@ -249,7 +272,9 @@ class XmlMidiFeatureExtractor:
         return features
     
     def extract_onset_deviation(self, performance_data):
-        tempos = self.extract_beat_tempo(performance_data)
+        beat_positions = performance_data.xml_obj.get_beat_positions()
+        tempos = feature_utils._cal_tempo_by_positions(beat_positions, performance_data.valid_position_pairs)
+
         features = []
         for pair in performance_data.pairs:
             if pair == []:
@@ -261,12 +286,12 @@ class XmlMidiFeatureExtractor:
                 tempo_start = tempo.time_position
 
                 passed_duration = note.note_duration.xml_position - tempo.xml_position
-                actual_passed_second = midi_start - tempo.start
+                actual_passed_second = midi.start - tempo_start
                 actual_passed_duration = actual_passed_second / 60 * tempo.qpm * note.state_fixed.divisions
 
                 xml_pos_diff = actual_passed_duration - passed_duration
                 pos_diff_in_quarter_note = xml_pos_diff / note.state_fixed.divisions
-                deviation = poss_diff_in_quarter_note
+                deviation = pos_diff_in_quarter_note
             features.append(deviation)
         return features
 
