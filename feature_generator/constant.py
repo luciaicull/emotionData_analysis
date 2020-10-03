@@ -9,7 +9,8 @@ XML_MIDI_FEATURE_LIST = ['beat_tempo',
                          'measure_tempo',
                          'velocity',
                          'original_duration',
-                         'elongated_duration']
+                         'elongated_duration',
+                         'onset_deviation']
 
 FEATURE_LIST_TMP = ['beat_tempo',
                     'measure_tempo',
