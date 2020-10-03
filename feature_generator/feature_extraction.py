@@ -3,14 +3,15 @@ import numpy as np
 from scipy.stats import skew, kurtosis
 from tqdm import tqdm
 import math
+from matplotlib import pyplot as plt
 
 from . import feature_utils
 
 class XmlMidiFeatureExtractor:
-    def __init__(self, set_list, feature_list, split):
+    def __init__(self, set_list, feature_list):
         self.set_list = set_list
         self.feature_key_list = feature_list
-        self.split = split      # num of measure to split. if split=0, it means no split
+        #self.split = split      # num of measure to split. if split=0, it means no split
     
     def _init_feature_dict(self):
         feature_dict = dict()
@@ -25,7 +26,8 @@ class XmlMidiFeatureExtractor:
             set_name = set_dict['name']
             set_list = set_dict['list']
 
-            feature_set_dict = {'name':set_name, 'set':[], 'splitted_set':[]}
+            #feature_set_dict = {'name':set_name, 'set':[], 'splitted_set':[]}
+            feature_set_dict = {'name':set_name, 'set':[]}
             e1_feature_dic = None
             xml_notes = None
             # get basic features
@@ -39,7 +41,7 @@ class XmlMidiFeatureExtractor:
                 total_measure = xml_notes[-1].measure_number
 
                 dic = {'emotion_number':performance_data.emotion_number, 'total_measure':total_measure,
-                       'feature_dict':feature_dict}
+                       'feature_dict': feature_dict, 'measure_position': performance_data.xml_obj.get_measure_positions()}
                 feature_set_dict['set'].append(dic)
                 if performance_data.emotion_number == 1:
                     e1_feature_dic = dic
@@ -58,23 +60,24 @@ class XmlMidiFeatureExtractor:
 
             feature_set_dict['set'] = sorted(feature_set_dict['set'], key=lambda feature_dict:feature_dict['emotion_number'])
 
+            '''
             # split data
             feature_set_dict['splitted_set'] = self._split_data(xml_notes, feature_set_dict['set'])
 
             # get stats
             feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'], set_name)
-
+            '''
             feature_data.append(feature_set_dict)
         
         return feature_data
-
+    '''
     # TODO
     def _add_normalized_stats(self, dic_list, set_name):
-        '''
+        
         # parameters
         # dic_list : list of dic
         #   dic : {'emotion_number':emotion_number, 'feature_dict':feature_dict}
-        '''
+        
         for dic in dic_list:
             if 'bucket_index' in dic.keys():
                 dic['stats'] = self._get_stats(dic['feature_dict'], set_name, dic['bucket_index'])
@@ -119,12 +122,12 @@ class XmlMidiFeatureExtractor:
 
     # TODO
     def _split_data(self, xml_notes, dic_list):
-        '''
+        
         # parameters
         # xml_notes : list of Note object
         # dic_list : list of dic
         #   dic : {'emotion_number':emotion_number, 'feature_dict':feature_dict}
-        '''
+        
         if self.split == 0:
             return dic_list
 
@@ -165,7 +168,7 @@ class XmlMidiFeatureExtractor:
             indices_bucket = indices_bucket[:-1]
 
         return indices_bucket
-                    
+    '''                 
     def _get_relative_feature(self, e1_list, eN_list):
         feature_list = []
         for ref, infer in zip(e1_list, eN_list):
@@ -244,6 +247,29 @@ class XmlMidiFeatureExtractor:
             features.append(duration)
 
         return features
+    
+    def extract_onset_deviation(self, performance_data):
+        tempos = self.extract_beat_tempo(performance_data)
+        features = []
+        for pair in performance_data.pairs:
+            if pair == []:
+                deviation = 0
+            else:
+                note = pair['xml']
+                midi=  pair['midi']
+                tempo = feature_utils.get_item_by_xml_position(tempos, note)
+                tempo_start = tempo.time_position
+
+                passed_duration = note.note_duration.xml_position - tempo.xml_position
+                actual_passed_second = midi_start - tempo.start
+                actual_passed_duration = actual_passed_second / 60 * tempo.qpm * note.state_fixed.divisions
+
+                xml_pos_diff = actual_passed_duration - passed_duration
+                pos_diff_in_quarter_note = xml_pos_diff / note.state_fixed.divisions
+                deviation = poss_diff_in_quarter_note
+            features.append(deviation)
+        return features
+
     
     def extract_onset_timing(self, performance_data):
         features = []
