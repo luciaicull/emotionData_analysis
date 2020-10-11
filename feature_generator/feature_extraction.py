@@ -12,52 +12,25 @@ class XmlMidiFeatureExtractor:
     def __init__(self, set_list, feature_list):
         self.set_list = set_list
         self.feature_key_list = feature_list
-        #self.split = split      # num of measure to split. if split=0, it means no split
-    '''
-    def _init_feature_dict(self):
-        feature_dict = dict()
-        for feature_key in self.feature_key_list:
-            feature_dict[feature_key] = []
-        return feature_dict
-    '''
+
     def extract_features(self):
-        #feature_data = []
-        dataset = FeatureDataset(self.set_list, self.feature_key_list)
+        dataset = FeatureDataset(self.set_list)
 
         for set_dict in tqdm(dataset.set_list):
-            #set_name = set_dict['name']
-            #set_list = set_dict['list']
             set_name = set_dict['name']
             data_list = set_dict['data_list']
 
-            #feature_set_dict = {'name':set_name, 'set':[], 'splitted_set':[]}
-            #feature_set_dict = {'name':set_name, 'set':[]}
             e1_feature_dic = None
             xml_notes = None
+
             # get basic features
-            #for performance_data in set_list:
             for data_class in data_list:
                 for feature_key in self.feature_key_list:
                     feat_list = getattr(self, 'extract_'+feature_key)(data_class.performance_data)
                     data_class.feature_data[feature_key] = feat_list
                 if data_class.emotion_number == 1:
                     e1_class = data_class
-                '''
-                feature_dict = self._init_feature_dict()
-                for feature_key in self.feature_key_list:
-                    feat_list = getattr(self, 'extract_'+feature_key)(performance_data)
-                    feature_dict[feature_key] = feat_list
-                
-                xml_notes = sorted(performance_data.xml_notes, key=lambda note:note.measure_number)
-                total_measure = xml_notes[-1].measure_number
 
-                dic = {'emotion_number':performance_data.emotion_number, 'total_measure':total_measure,
-                       'feature_dict': feature_dict, 'measure_position': performance_data.xml_obj.get_measure_positions()}
-                feature_set_dict['set'].append(dic)
-                if performance_data.emotion_number == 1:
-                    e1_feature_dic = dic
-                    xml_notes = performance_data.xml_notes
-                '''
             # get e1-relative, e1-ratio, self-diff features
             for data_class in data_list:
                 for feature_key in self.feature_key_list:
@@ -68,130 +41,10 @@ class XmlMidiFeatureExtractor:
                     data_class.feature_data['relative_'+feature_key] = relative_feature
                     data_class.feature_data[feature_key+'_ratio'] = ratio_feature
                     data_class.feature_data[feature_key+'_diff'] = diff_feature
-            '''
-            for dic in feature_set_dict['set']:
-                for feature_key in self.feature_key_list:
-                    relative_feature = self._get_relative_feature(e1_feature_dic['feature_dict'][feature_key], dic['feature_dict'][feature_key])
-                    ratio_feature = self._get_ratio_feature(e1_feature_dic['feature_dict'][feature_key], dic['feature_dict'][feature_key])
-                    diff_feature = self._get_diff_feature(dic['feature_dict'][feature_key])
-
-                    dic['feature_dict']['relative_'+feature_key] = relative_feature
-                    dic['feature_dict'][feature_key+'_ratio'] = ratio_feature
-                    dic['feature_dict'][feature_key+'_diff'] = diff_feature
-            '''
-            '''
-            feature_set_dict['set'] = sorted(feature_set_dict['set'], key=lambda feature_dict:feature_dict['emotion_number'])
-            '''
-            '''
-            # split data
-            feature_set_dict['splitted_set'] = self._split_data(xml_notes, feature_set_dict['set'])
-
-            # get stats
-            feature_set_dict['splitted_set'] = self._add_normalized_stats(feature_set_dict['splitted_set'], set_name)
-            '''
-            #feature_data.append(feature_set_dict)
         
         #return feature_data
         return dataset
-    '''
-    # TODO
-    def _add_normalized_stats(self, dic_list, set_name):
         
-        # parameters
-        # dic_list : list of dic
-        #   dic : {'emotion_number':emotion_number, 'feature_dict':feature_dict}
-        
-        for dic in dic_list:
-            if 'bucket_index' in dic.keys():
-                dic['stats'] = self._get_stats(dic['feature_dict'], set_name, dic['bucket_index'])
-            else:
-                dic['stats'] = self._get_stats(dic['feature_dict'], set_name, 0)
-        
-        stat_keys = list(dic_list[0]['stats'].keys())
-        total_stat_list = [] # shape=(total partial dict in set, num_stats)
-        for dic in dic_list:
-            stat_list = [dic['stats'][key] for key in stat_keys]
-            total_stat_list.append(stat_list)
-        
-        scaler = StandardScaler()
-        scaler.fit(total_stat_list)
-        scaled_total_stat_list = scaler.transform(total_stat_list)
-
-        for stat_list, dic in zip(scaled_total_stat_list, dic_list):
-            dic['scaled_stats'] = dict()
-            for stat, key in zip(stat_list, stat_keys):
-                dic['scaled_stats'][key] = stat
-        
-        return dic_list
-
-    # TODO   
-    def _get_stats(self, feature_dict, set_name, bucket_index):
-        # feature dict = {'key1':feat_list, 'key2':feat_list, ...}
-        stats = dict()
-        for key in feature_dict.keys():
-            feat_list = [feat for feat in feature_dict[key] if feat != None]
-
-            if 'diff' in key:
-                feat_list = [feat for feat in feat_list if feat != 0]
-            
-            #if feat_list == []:
-            #    print(set_name, key, bucket_index)
-
-            stats[key+'_mean'] = np.mean(feat_list)
-            stats[key+'_std'] = np.std(feat_list)
-            stats[key+'_skew'] = skew(feat_list)
-            stats[key+'_kurt'] = kurtosis(feat_list)
-        return stats
-
-    # TODO
-    def _split_data(self, xml_notes, dic_list):
-        
-        # parameters
-        # xml_notes : list of Note object
-        # dic_list : list of dic
-        #   dic : {'emotion_number':emotion_number, 'feature_dict':feature_dict}
-        
-        if self.split == 0:
-            return dic_list
-
-        splitted_set_list = []
-
-        for dic in dic_list:
-            indices_bucket = self._get_indices(xml_notes)
-
-            for i, bucket in enumerate(indices_bucket):
-                partial_dic = {'bucket_index':i+1, 'emotion_number':dic['emotion_number'], 'feature_dict':dict(), 'total_bucket':len(indices_bucket)}
-                for feat_key in dic['feature_dict'].keys():
-                    partial_dic['feature_dict'][feat_key] = []
-
-                for note_index in bucket:
-                    for feat_key in dic['feature_dict'].keys():
-                        if 'diff' in feat_key and note_index == len(xml_notes)-1:
-                            continue
-                        partial_dic['feature_dict'][feat_key].append(dic['feature_dict'][feat_key][note_index])
-                splitted_set_list.append(partial_dic)
-
-        return splitted_set_list
-    
-    # TODO
-    def _get_indices(self, xml_notes):
-        max_measure = 0
-        for note in xml_notes:
-            if note.measure_number > max_measure:
-                max_measure = note.measure_number
-
-        bucket_len = math.ceil(max_measure / self.split)
-        indices_bucket = [[] for _ in range(bucket_len)]
-        
-        for i, note in enumerate(xml_notes):
-            b = (int)((note.measure_number - 1) / self.split)
-            indices_bucket[b].append(i)
-
-        if len(indices_bucket[-1]) == 1:
-            indices_bucket = indices_bucket[:-1]
-
-        return indices_bucket
-    '''                 
     def _get_relative_feature(self, e1_list, eN_list):
         feature_list = []
         for ref, infer in zip(e1_list, eN_list):
