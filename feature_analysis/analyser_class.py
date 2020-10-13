@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 import math
 
 class Analyser():
-    def __init__(self, x, y, feature_list):
+    def __init__(self, x, y, feature_list, fig_save_dir):
         self.x = x
         self.y = y
         self.feature_list = feature_list
+        self.fig_save_dir = fig_save_dir
     
     def run_feature_selection(self):
         self._select_k_best()
@@ -29,7 +30,7 @@ class Analyser():
         feature_scores.columns = ['Feature Name', 'Score']
         
         feature_scores.nlargest(40, 'Score').plot.barh(x='Feature Name', y='Score', title='Select K Best', figsize=(20,10))
-        plt.savefig('./kbest.png')
+        plt.savefig(self.fig_save_dir.joinpath('kbest.png'))
 
     def _extra_trees(self):
         model = ExtraTreesClassifier()
@@ -38,7 +39,7 @@ class Analyser():
         feat_importances = pd.Series(model.feature_importances_, index=self.feature_list)
         
         feat_importances.nlargest(40).plot(kind='barh', title='Extra Tree Classifier', figsize=(20,10))
-        plt.savefig('./extra_trees.png')
+        plt.savefig(self.fig_save_dir.joinpath('extra_trees.png'))
 
 
     def _get_corr(self):
@@ -51,5 +52,5 @@ class Analyser():
         corr = corrmat['label'].sort_values(ascending=False)
         plt.figure(figsize=(15,15))
         corr.plot(kind='barh', title='Correlation', figsize=(20, 20))
-        plt.savefig('./corr.png')
+        plt.savefig(self.fig_save_dir.joinpath('corr.png'))
 

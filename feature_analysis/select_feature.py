@@ -11,7 +11,7 @@ def main():
     
     X, Y, feature_key_list = utils.make_X_Y(feature_data)
 
-    analyser = Analyser(X, Y, feature_key_list)
+    analyser = Analyser(X, Y, feature_key_list, args.save_folder)
     analyser.run_feature_selection()
 
 
