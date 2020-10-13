@@ -17,11 +17,7 @@ class XmlMidiFeatureExtractor:
         dataset = FeatureDataset(self.set_list)
 
         for set_dict in tqdm(dataset.set_list):
-            set_name = set_dict['name']
             data_list = set_dict['data_list']
-
-            e1_feature_dic = None
-            xml_notes = None
 
             # get basic features
             for data_class in data_list:
@@ -101,7 +97,6 @@ class XmlMidiFeatureExtractor:
             if pair == []:
                 duration = 0
             else:
-                note = pair['xml']
                 midi = pair['midi']
                 duration = midi.end - midi.start
             features.append(duration)
@@ -114,7 +109,6 @@ class XmlMidiFeatureExtractor:
             if pair == []:
                 duration = 0
             else:
-                note = pair['xml']
                 midi = pair['midi']
                 if midi.elongated_offset_time > midi.end:
                     duration = midi.elongated_offset_time - midi.start
@@ -171,7 +165,7 @@ class XmlMidiFeatureExtractor:
             if i < len(onset_timings)-1:
                 features.append(onset_timings[i+1] - onset_timings[i])
         '''
-        for i, onset in enumerate(onset_timings):
+        for i, _ in enumerate(onset_timings):
             if i < len(onset_timings) - 1:
                 if onset_timings[i+1] == -1 or onset_timings[i] == -1:
                     ioi = 0
