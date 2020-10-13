@@ -2,6 +2,7 @@ from tqdm import tqdm
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 from scipy.stats import skew, kurtosis
+import math
 
 class FeatureData:
     def __init__(self, set_name, performance_data):
@@ -10,11 +11,16 @@ class FeatureData:
         self.performance_data = performance_data
         self.feature_data = dict()
         self.scaled_feature_data = dict()
+        self.total_scaled_statistics = dict()
         self.splitted_scaled_feature_data = []
 
     def convert_to_dict(self):
-        pass
-
+        data_dict = {'set_name':self.set_name,
+                     'emotion_number':self.emotion_number,
+                     'scaled_feature_data':self.scaled_feature_data,
+                     'total_scaled_statistics':self.total_scaled_statistics,
+                     'splitted_scaled_feature_data':self.splitted_scaled_feature_data}
+        return data_dict
 
 class FeatureDataset:
     def __init__(self, set_list):
@@ -39,13 +45,15 @@ class FeatureDataset:
         return set_list
 
     def get_final_data(self, split, hop):
-        for set_dict in self.set_list:
+        for set_dict in tqdm(self.set_list):
             data_list = set_dict['data_list']
             # 1. get set-level normalized features
             self._normalize_set_level(data_list)
 
-            # 2. split
-            # 3. get stats
+            # 2. get total scaled features' statistics
+            self._get_total_scaled_statistics(data_list)
+
+            # 3. split & get stats
             self._split_measures_and_get_statistics(data_list, split, hop)
 
         # 4. return in dict format
@@ -53,7 +61,7 @@ class FeatureDataset:
 
     def _normalize_set_level(self, data_list):
         feature_keys = data_list[0].feature_data.keys()
-        for key in tqdm(feature_keys):
+        for key in feature_keys:
             indices = [0]
             total_feat_list = []
             for eN_class in data_list:
@@ -68,6 +76,17 @@ class FeatureDataset:
                 feature_list = [feat[0] for feat in transformed[indices[i]:indices[i+1]]]
                 eN_class.scaled_feature_data[key] = feature_list
 
+    def _get_total_scaled_statistics(self, data_list):
+        feature_keys = list(data_list[0].scaled_feature_data.keys())
+        for eN_class in data_list:
+            for key in feature_keys:
+                feat_data = [feat for feat in eN_class.scaled_feature_data[key] if not math.isnan(feat)]
+                eN_class.total_scaled_statistics[key+'_mean'] = np.mean(feat_data)
+                eN_class.total_scaled_statistics[key+'_std'] = np.std(feat_data)
+                eN_class.total_scaled_statistics[key+'_skew'] = skew(feat_data)
+                eN_class.total_scaled_statistics[key+'_kurt'] = kurtosis(feat_data)
+
+
     def _split_measures_and_get_statistics(self, data_list, split, hop):
         e1_class = data_list[0]
         feature_keys = list(e1_class.scaled_feature_data.keys())
@@ -78,15 +97,18 @@ class FeatureDataset:
             measure_ranges.append((i*hop, i*hop+split))
 
         for eN_class in data_list:
-            for measure_range in measure_ranges:
-                data = {'start': measure_range[0], 'end': measure_range[1]-1, 'feature_data': dict.fromkeys(feature_keys, []), 'statistics':dict()}
+            for start, end in measure_ranges:
+                data = {'start': start, 'end': end-1, 'feature_data': dict(), 'statistics':dict()}
+                for key in feature_keys:
+                    data['feature_data'][key] = []
                 for i, note in enumerate(eN_class.performance_data.xml_notes):
-                    if note.measure_number in measure_range:
+                    if note.measure_number in range(start, end):
                         for key in feature_keys:
-                            data['feature_data'][key].append(eN_class.scaled_feature_data[key][i])
+                            if i < len(eN_class.scaled_feature_data[key]):
+                                data['feature_data'][key].append(eN_class.scaled_feature_data[key][i])
                 
                 for key in feature_keys:
-                    feat_data = data['feature_data'][key]
+                    feat_data = [feat for feat in data['feature_data'][key] if not math.isnan(feat)]
                     data['statistics'][key+'_mean'] = np.mean(feat_data)
                     data['statistics'][key+'_std'] = np.std(feat_data)
                     data['statistics'][key+'_skew'] = skew(feat_data)
@@ -97,7 +119,7 @@ class FeatureDataset:
     def _convert_to_dict(self):
         final_dataset_dicts = []
         for set_dict in self.set_list:
-            data_list = set_dict['list']
+            data_list = set_dict['data_list']
             for eN_class in data_list:
                 data_dict = eN_class.convert_to_dict()
                 final_dataset_dicts.append(data_dict)
