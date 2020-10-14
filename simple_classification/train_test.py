@@ -3,12 +3,13 @@ import numpy as np
 import pandas as pd
 import time
 
-from .constants import NUM_EPOCH, FEATURE_KEYS, LEARNING_RATE
+from .constants import NUM_EPOCH, FEATURE_KEYS, LEARNING_RATE, TEST_FEATURE_KEYS
 from . import data_manager, models, utils
+from .arg_parser import get_parser
 
 class Runner(object):
-    def __init__(self):
-        self.model = models.SimpleClassifier()
+    def __init__(self, input_size):
+        self.model = models.SimpleClassifier(input_size)
         self.model = self.model.double()
         
         #self.criterion = torch.nn.MultiMarginLoss()
@@ -50,13 +51,15 @@ class Runner(object):
         return epoch_loss, total_accuracy, total_result  
 
 def main():
-    torch.manual_seed(1234)
+    #torch.manual_seed(1234)
+    
+    p = get_parser()
+    args = p.parse_args()
+    feature_keys = TEST_FEATURE_KEYS
 
-    train_loader, valid_loader, test_loader = data_manager.get_dataloader()
-    runner = Runner()
+    train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.name, feature_keys)
+    runner = Runner(len(feature_keys))
 
-    train_loss_list = []
-    valid_loss_list = []
     print('Training : ')
     for epoch in range(NUM_EPOCH):
         train_loss, train_acc, train_result = runner.run(train_loader, mode='train')
@@ -64,7 +67,7 @@ def main():
         print("[Epoch %d/%d] [Train Loss: %.4f] [Train Acc: %.4f%%] [Valid Loss: %.4f] [Valid Acc: %.4f%%]" %
               (epoch + 1, NUM_EPOCH, train_loss, train_acc, valid_loss, valid_acc))
         
-    test_loss, test_acc, test_result = runner.run(test_loader, mode='test')
+    _, test_acc, test_result = runner.run(test_loader, mode='test')
     print("Training Finished")
     print("Training Accuracy: %.4f%%" % train_acc)
     utils.print_total_result(train_result)

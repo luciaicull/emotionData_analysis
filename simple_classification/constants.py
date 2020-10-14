@@ -60,7 +60,12 @@ VALID_LIST = ['Bach.french-suite_bwv816_no5_gavotte.mm_1-end.s002',
               'Schubert.sonata_d850_no17_mov1.mm_1-47.s019',
               'Chopin.etude_op25_no9_.mm_1-37.s013',
               'Mozart.sonata_k332_no12_mov1.mm_1-40.s007']
-             
+
+TEST_FEATURE_KEYS = ['relative_velocity_std', 'relative_velocity_mean', 'velocity_ratio_std',
+                     'relative_beat_tempo_mean', 'relative_measure_tempo_mean', 'beat_tempo_ratio_std', 'relative_beat_tempo_std',
+                     'original_duration_ratio_std', 'relative_elongated_duration_std', 'relative_original_duration_std',
+                     'relative_onset_deviation_std']
+
 FEATURE_KEYS = ['relative_beat_tempo_mean',
                 'beat_tempo_ratio_mean',
                 'beat_tempo_ratio_std',
@@ -92,19 +97,13 @@ FEATURE_KEYS = ['beat_tempo_ratio_mean',
                 'relative_original_duration_mean']
 '''
 
-STAT_TYPE = 'std_scaled_stats'
+STAT_TYPE = 'total_scaled_statistics'
 SVM_OPTIONS = {'C': 10, 'kernel': 'linear',
                'decision_function_shape': 'ovr', 'gamma': 'scale'}
 
 BATCH_SIZE = 1
 NUM_EPOCH = 100
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-2
 
 DATA_PATH = Path('/home/yoojin/data/emotionDataset/data_for_analysis/entire_dataset')
 FILE_NAME = 'feature_dict_for_analysis_with_stats_0809_each_song.dat'
-
-'''class Params(object):
-    def __init__(self):
-        self.data_path = Path('/home/yoojin/data/emotionDataset/data_for_analysis/entire_dataset')
-        self.file_name = 'feature_dict_for_analysis_with_stats_0809_each_song.dat'
-        '''
