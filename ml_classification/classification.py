@@ -8,15 +8,15 @@ def main():
     p = get_parser()
     args = p.parse_args()
 
-    feature_data = utils.load_datafile(args.path, args.name)
+    total_feature_data = utils.load_datafile(args.path, args.name)
 
-    total_data, train_data, test_data = utils.split_train_test(feature_data)
+    total_data, train_data, test_data = utils.split_train_test(total_feature_data)
 
     r = Runner(total_data, train_data, test_data)
     r.run_svm()
 
     print('')
-
+'''
 def fragment_main():
     dir_path = Path('/home/yoojin/data/emotionDataset/final/save')
 
@@ -32,7 +32,6 @@ def fragment_main():
     r.test_fragment()
 
     print('')
-
+'''
 if __name__ == "__main__":
-    #main()
-    fragment_main()
+    main()

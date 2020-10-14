@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import math
 
-from .constants import TEST_LIST, MIDIMIDI_FEATURE_KEYS, XMLMIDI_FEATURE_KEYS
+from .constants import TEST_LIST
 
 def save_datafile(path, name, data):
     with open(path.joinpath(name), "wb") as f:
@@ -17,22 +17,40 @@ def load_datafile(path, name):
     return data
 
 
-def split_train_test(feature_data):
+def split_train_test(total_feature_data):
     train_data = []
     test_data = []
 
-    for emotion_set in feature_data:
-        set_name = emotion_set['name']
+    #for emotion_set in feature_data:
+    for feature_data in total_feature_data:
+        #set_name = emotion_set['name']
+        set_name = feature_data['set_name']
         if set_name in TEST_LIST:
-            test_data.append(emotion_set)
+            #test_data.append(emotion_set)
+            test_data.append(feature_data)
         else:
-            train_data.append(emotion_set)
+            #train_data.append(emotion_set)
+            train_data.append(feature_data)
 
     total_data = train_data + test_data
 
     return total_data, train_data, test_data
 
+def make_X_Y_not_splitted(total_dataset, feature_keys):
+    x = []
+    y = []
 
+    for dataset in total_dataset:
+        emotion_number = dataset['emotion_number']
+
+        data = []
+        for key in feature_keys:
+            data.append(dataset['total_scaled_statistics'][key])
+        x.append(data)
+        y.append(emotion_number)
+
+    return np.array(x), np.array(y)
+'''
 def make_X_Y(feature_data):
     x = []
     y = []
@@ -87,3 +105,4 @@ def make_X_Y_for_xmlmidi(feature_data):
                 if 'bucket_index' in feature_set.keys():
                     info.append((set_name, feature_set['bucket_index'], feature_set['total_bucket']))
     return np.array(x), np.array(y), info
+'''

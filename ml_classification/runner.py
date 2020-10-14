@@ -5,16 +5,18 @@ import numpy as np
 import csv
 
 from . import utils
+from .constants import XMLMIDI_FEATURE_KEYS, FEATURE_KEYS
 
 class Runner():
     def __init__(self, total_data, train_data, test_data):
+        feature_key = FEATURE_KEYS
         self.total_data = total_data
         self.train_data = train_data
         self.test_data = test_data
 
-        self.total_X, self.total_Y = utils.make_X_Y(self.total_data)
-        self.train_X, self.train_Y = utils.make_X_Y(self.train_data)
-        self.test_X, self.test_Y = utils.make_X_Y(self.test_data)
+        self.total_X, self.total_Y = utils.make_X_Y_not_splitted(self.total_data, feature_key)
+        self.train_X, self.train_Y = utils.make_X_Y_not_splitted(self.train_data, feature_key)
+        self.test_X, self.test_Y = utils.make_X_Y_not_splitted(self.test_data, feature_key)
         '''
         # test code for fragment classification test ==> move to frag_classification
         self.train_X, self.train_Y, _ = utils.make_X_Y_for_xmlmidi(self.train_data)
