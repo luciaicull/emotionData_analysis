@@ -98,12 +98,10 @@ FEATURE_KEYS = ['beat_tempo_ratio_mean',
 '''
 
 STAT_TYPE = 'total_scaled_statistics'
-SVM_OPTIONS = {'C': 10, 'kernel': 'linear',
-               'decision_function_shape': 'ovr', 'gamma': 'scale'}
 
 BATCH_SIZE = 1
 NUM_EPOCH = 100
-LEARNING_RATE = 1e-2
+LEARNING_RATE = 1e-3
 
 DATA_PATH = Path('/home/yoojin/data/emotionDataset/data_for_analysis/entire_dataset')
 FILE_NAME = 'feature_dict_for_analysis_with_stats_0809_each_song.dat'

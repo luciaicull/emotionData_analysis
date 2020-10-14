@@ -51,7 +51,7 @@ class Runner(object):
         return epoch_loss, total_accuracy, total_result  
 
 def main():
-    #torch.manual_seed(1234)
+    torch.manual_seed(1234)
     
     p = get_parser()
     args = p.parse_args()
