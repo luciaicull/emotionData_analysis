@@ -6,7 +6,7 @@ import math
 from matplotlib import pyplot as plt
 
 from . import feature_utils
-from .feature_data_class import FeatureDataset
+from .feature_data_class import RawFeatureDataset
 
 class XmlMidiFeatureExtractor:
     def __init__(self, set_list, feature_list):
@@ -14,7 +14,7 @@ class XmlMidiFeatureExtractor:
         self.feature_key_list = feature_list
 
     def extract_features(self):
-        dataset = FeatureDataset(self.set_list)
+        dataset = RawFeatureDataset(self.set_list)
 
         for set_dict in tqdm(dataset.set_list):
             data_list = set_dict['data_list']
