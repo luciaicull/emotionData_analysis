@@ -79,8 +79,6 @@ TEST_FEATURE_KEYS = ['relative_velocity_std', 'relative_velocity_mean', 'velocit
                      'relative_beat_tempo_mean', 'relative_measure_tempo_mean', 'beat_tempo_ratio_std', 'relative_beat_tempo_std',
                      'original_duration_ratio_std', 'relative_elongated_duration_std', 'relative_original_duration_std',
                      'relative_onset_deviation_std']
-                     
-STAT_TYPE = 'std_scaled_stats'
 
 BATCH_SIZE = 1
 NUM_EPOCH = 100
