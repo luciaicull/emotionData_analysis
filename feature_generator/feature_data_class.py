@@ -13,8 +13,6 @@ class RawFeatureData:
         self.performance_data = performance_data
         self.feature_data = dict()
 
-        #self.scaled_feature_data = dict()
-        #self.total_scaled_statistics = dict()
         self.statistics = dict()
         self.scaled_statistics = dict()
 
@@ -24,8 +22,6 @@ class RawFeatureData:
                      'feature_data':self.feature_data,
                      'statistics':self.statistics,
                      'scaled_statistics':self.scaled_statistics}
-                     #'scaled_feature_data':self.scaled_feature_data,
-                     #'total_scaled_statistics':self.total_scaled_statistics}
         return data_dict
 
 class RawFeatureDataset:
@@ -80,47 +76,6 @@ class RawFeatureDataset:
                 for i, key in enumerate(stat_keys):
                     eN_class.scaled_statistics[key] = eN_transformed_stats[i]
 
-    '''
-    def scale_dataset(self):
-        for set_dict in tqdm(self.set_list):
-            data_list = set_dict['data_list']
-            # 1. get set-level normalized features
-            self._normalize_set_level(data_list)
-
-            # 2. get total scaled features' statistics
-            self._get_total_statistics(data_list)
-    
-    def _normalize_set_level(self, data_list):
-        feature_keys = data_list[0].feature_data.keys()
-        for key in feature_keys:
-            indices = [0]
-            total_feat_list = []
-            for eN_class in data_list:
-                feature_list = [[feat] for feat in eN_class.feature_data[key]]
-                indices.append(indices[-1]+len(feature_list))
-                total_feat_list += feature_list
-
-            scaler = StandardScaler()
-            scaler.fit(total_feat_list)
-            transformed = scaler.transform(total_feat_list)
-            for i, eN_class in enumerate(data_list):
-                feature_list = [feat[0] for feat in transformed[indices[i]:indices[i+1]]]
-                eN_class.scaled_feature_data[key] = feature_list
-    
-    def _get_total_statistics(self, data_list):
-        feature_keys = list(data_list[0].feature_data.keys())
-
-        for eN_class in data_list:
-            feature_data_list = eN_class.scaled_feature_data
-            stat_dict = eN_class.total_scaled_statistics
-
-            for key in feature_keys:
-                feat_data = [feat for feat in feature_data_list[key] if not math.isnan(feat)]
-                stat_dict[key+'_mean'] = np.mean(feat_data)
-                stat_dict[key+'_std'] = np.std(feat_data)
-                stat_dict[key+'_skew'] = skew(feat_data)
-                stat_dict[key+'_kurt'] = kurtosis(feat_data)
-    '''
     def save_into_dict(self, save_path):
         raw_feature_data_dicts = []
         for set_dict in self.set_list:
@@ -139,7 +94,6 @@ class SplittedFeatureData:
         self.start = start
         self.end = end
         self.feature_data = dict()
-        #self.scaled_feature_data = dict()
         self.statistics = dict() 
         self.scaled_statistics = dict()
 
@@ -149,7 +103,6 @@ class SplittedFeatureData:
                      'emotion_number':self.emotion_number,
                      'start_measure':self.start,
                      'end_measure':self.end,
-                     #'scaled_feature_data':self.scaled_feature_data,
                      'statistics':self.statistics,
                      'scaled_statistics':self.scaled_statistics}
         return data_dict
