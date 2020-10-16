@@ -39,7 +39,7 @@ class XmlMidiFeatureExtractor:
                     data_class.feature_data[feature_key+'_diff'] = diff_feature
         
         #scale feature_data and return
-        dataset.scale_dataset()
+        dataset.get_statistics()
         return dataset
         
     def _get_relative_feature(self, e1_list, eN_list):
