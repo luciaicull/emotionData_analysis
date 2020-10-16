@@ -3,6 +3,7 @@ from .arg_parser import get_parser
 from .raw_data_class import MidiMidiDataset, XmlMidiDataset
 from .feature_extraction import MidiMidiFeatureExtractor, XmlMidiFeatureExtractor
 from .constant import MIDI_MIDI_FEATURE_LIST, XML_MIDI_FEATURE_LIST, FEATURE_LIST_TMP
+from .feature_data_class import SplittedFeatureDataset
 from . import utils
 
 def generate():
@@ -28,11 +29,14 @@ def generate():
         # extract features
         extractor = XmlMidiFeatureExtractor(dataset.set_list, XML_MIDI_FEATURE_LIST)
     
-    feature_dataset = extractor.extract_features()
-    utils.save_datafile(emotion_save_path, 'feature_dataset.dat', feature_dataset)
-    #feature_dataset = utils.load_datafile(emotion_save_path, 'feature_dataset.dat')
-    final_feature_data = feature_dataset.get_final_data(split=8, hop=1)
-    utils.save_datafile(emotion_save_path, args.save_name, final_feature_data)
+    raw_feature_dataset = extractor.extract_features()
+    raw_feature_dataset.save_into_dict(emotion_save_path)
+    utils.save_datafile(emotion_save_path, 'raw_feature_dataset.dat', raw_feature_dataset)
+    
+    raw_feature_dataset = utils.load_datafile(emotion_save_path, 'raw_feature_dataset.dat')
+    
+    splitted_feature_dataset = SplittedFeatureDataset(raw_feature_dataset, hop=4, split=8)
+    splitted_feature_dataset.save_into_dict(emotion_save_path)
 
 
 
