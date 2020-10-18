@@ -45,7 +45,7 @@ def make_X_Y_not_splitted(total_dataset, feature_keys):
 
         data = []
         for key in feature_keys:
-            data.append(dataset['total_scaled_statistics'][key])
+            data.append(dataset['scaled_statistics'][key])
         x.append(data)
         y.append(emotion_number)
 

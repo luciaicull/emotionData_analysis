@@ -97,7 +97,7 @@ FEATURE_KEYS = ['beat_tempo_ratio_mean',
                 'relative_original_duration_mean']
 '''
 
-STAT_TYPE = 'total_scaled_statistics'
+STAT_TYPE = 'scaled_statistics'
 
 BATCH_SIZE = 1
 NUM_EPOCH = 100
