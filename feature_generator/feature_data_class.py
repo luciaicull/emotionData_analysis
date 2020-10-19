@@ -135,6 +135,7 @@ class SplittedFeatureDataset:
             # split
             splitted_data_list = []
             for eN_raw_feature_class in set_dict['data_list']:
+                eN_split_list = []
                 for i, (start, end) in enumerate(measure_ranges):
                     if i == len(measure_ranges)-1:
                         data = SplittedFeatureData(eN_raw_feature_class.set_name, eN_raw_feature_class.emotion_number, start, 'last')
@@ -160,19 +161,29 @@ class SplittedFeatureDataset:
                         data.statistics[key+'_skew'] = skew(feat_list)
                         data.statistics[key+'_kurt'] = kurtosis(feat_list)
                     
-                    splitted_data_list.append(data)
+                    eN_split_list.append(data)
+                splitted_data_list.append(eN_split_list)
             
-            stat_keys = list(splitted_data_list[0].statistics.keys())
+            stat_keys = list(splitted_data_list[0][0].statistics.keys())
             total_stats = []
-            for splitted_data in splitted_data_list:
-                stat_list = [splitted_data.statistics[key] for key in stat_keys]
-                total_stats.append(stat_list)
+            indices = []
+            prev_i = 0
+            i = 0
+            for eN_split_list in splitted_data_list:
+                for splitted_data in eN_split_list:
+                    stat_list = [splitted_data.statistics[key] for key in stat_keys]
+                    total_stats.append(stat_list)
+                    i += 1
+                indices.append((prev_i, i))
+                prev_i = i
             scaler = StandardScaler()
             scaler.fit(total_stats)
             transformed_stats = scaler.transform(total_stats)
-            for splitted_data, eN_transformed_stats in zip(splitted_data_list, transformed_stats):
-                for i, key in enumerate(stat_keys):
-                    splitted_data.scaled_statistics[key] = eN_transformed_stats[i]
+
+            for eN, (start, end) in enumerate(indices):
+                for k, i in enumerate(range(start, end)):
+                    for index, key in enumerate(stat_keys):
+                        splitted_data_list[eN][k].scaled_statistics[key] = transformed_stats[i][index]
             
             set_list += splitted_data_list
         
@@ -181,9 +192,13 @@ class SplittedFeatureDataset:
         
     def save_into_dict(self, save_path):
         splitted_feature_data_dicts = []
-
-        for splitted_feature_data in self.set_list:
-            data_dict = splitted_feature_data.convert_to_dict()
-            splitted_feature_data_dicts.append(data_dict)
+        
+        for eN_split_list in self.set_list:
+            eN_dicts = []
+            for split in eN_split_list:
+                data_dict = split.convert_to_dict()
+                eN_dicts.append(data_dict)
+            splitted_feature_data_dicts.append(eN_dicts)
+            
         save_name = 'splitted_hop_{}_split_{}.dat'.format(self.hop, self.split)
         utils.save_datafile(save_path, save_name, splitted_feature_data_dicts)
