@@ -2,7 +2,7 @@ import torch
 
 from .arg_parser import get_parser
 from . import data_manager, models, utils
-from .constants import TEST_FEATURE_KEYS, LEARNING_RATE, NUM_EPOCH
+from .constants import TEST_FEATURE_KEYS, LEARNING_RATE, NUM_EPOCH, FEATURE_KEYS
 
 
 class Runner(object):
@@ -50,9 +50,14 @@ def main():
 
     p = get_parser()
     args = p.parse_args()
-    feature_keys = TEST_FEATURE_KEYS
+    #feature_keys = TEST_FEATURE_KEYS
+    feature_keys = FEATURE_KEYS
 
-    train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.name, feature_keys)
+    # test with split
+    # TODO
+
+    # test without split
+    train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, args.total_data_name, feature_keys, test_with_split=False)
     runner = Runner(len(feature_keys))
 
     print('Training : ')
