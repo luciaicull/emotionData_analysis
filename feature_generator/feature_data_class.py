@@ -124,13 +124,14 @@ class SplittedFeatureDataset:
             e1_class = data_list[0]
             feature_keys = list(e1_class.feature_data.keys())
             max_measure = max([note.measure_number for note in e1_class.performance_data.xml_notes])
-            if max_measure < self.split:
+            if max_measure <= self.split:
                 measure_ranges = [(1, max_measure+1)]
             else:
-                split_num = math.ceil((max_measure - self.split) / self.hop) + 1
                 measure_ranges = []
-                for i in range(split_num+1):
-                    measure_ranges.append((i*self.hop+1, i*self.hop+self.split+1))
+                end_frag_start = max_measure+1-self.split
+                for i in range(1, end_frag_start, self.hop):
+                    measure_ranges.append((i, i+self.split))
+                measure_ranges.append((end_frag_start, max_measure+1))
             
             # split
             splitted_data_list = []
