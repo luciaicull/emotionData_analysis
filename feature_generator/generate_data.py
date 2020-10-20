@@ -35,9 +35,10 @@ def generate():
     
     raw_feature_dataset = utils.load_datafile(emotion_save_path, 'raw_feature_dataset.dat')
     
-    splitted_feature_dataset = SplittedFeatureDataset(raw_feature_dataset, hop=4, split=8)
-    splitted_feature_dataset.save_into_dict(emotion_save_path)
-
+    r_list = [(1,8), (2,8), (4,8), (2,16), (4,16), (8,16)]
+    for (hop, split) in r_list:
+        splitted_feature_dataset = SplittedFeatureDataset(raw_feature_dataset, hop=hop, split=split)
+        splitted_feature_dataset.save_into_dict(emotion_save_path)
 
 
 if __name__ == "__main__":
