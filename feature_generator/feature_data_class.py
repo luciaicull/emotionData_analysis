@@ -138,10 +138,7 @@ class SplittedFeatureDataset:
             for eN_raw_feature_class in set_dict['data_list']:
                 eN_split_list = []
                 for i, (start, end) in enumerate(measure_ranges):
-                    if i == len(measure_ranges)-1:
-                        data = SplittedFeatureData(eN_raw_feature_class.set_name, eN_raw_feature_class.emotion_number, start, 'last')
-                    else:
-                        data = SplittedFeatureData(eN_raw_feature_class.set_name, eN_raw_feature_class.emotion_number, start, end)
+                    data = SplittedFeatureData(eN_raw_feature_class.set_name, eN_raw_feature_class.emotion_number, start, end)
                     
                     for key in feature_keys:
                         data.feature_data[key] = []
