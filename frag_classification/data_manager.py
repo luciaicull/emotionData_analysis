@@ -42,9 +42,10 @@ class RawDataLoader(object):
                     if set_name in list_name:
                         dataset_list.append(eN_dataset)
             
-            X, Y = [], []
+            names, measures, X, Y = [], [], [], []
             for eN_dataset in dataset_list:
                 eN_list = []
+                eN_measures = []
                 for dataset in eN_dataset:
                     data = []
                     for key in x_keys:
@@ -61,11 +62,16 @@ class RawDataLoader(object):
                     if mode == 'train':
                         X.append(data)
                         Y.append(dataset['emotion_number'])
+                        names.append(dataset['set_name'])
+                        measures.append((dataset['start_measure'], dataset['end_measure']))
                     else:
                         eN_list.append(data)
+                        eN_measures.append((dataset['start_measure'], dataset['end_measure']))
                 if mode != 'train':
                     X.append(eN_list)
                     Y.append(dataset['emotion_number'])
+                    names.append(dataset['set_name'])
+                    measures.append(eN_measures)
         # load total dataset
         else:
             for dataset in self.total_dataset:
@@ -77,7 +83,7 @@ class RawDataLoader(object):
                     if set_name in list_name:
                         dataset_list.append(dataset)
             
-            X, Y = [], []
+            names, measures, X, Y = [], [], [], []
             for dataset in dataset_list:
                 data = []
                 for key in x_keys:
@@ -93,50 +99,21 @@ class RawDataLoader(object):
                     continue
                 X.append(data)
                 Y.append(dataset['emotion_number'])
-        '''    
-        for dataset in self.total_dataset:
-            set_name = dataset['set_name']
-            if mode == 'train':
-                if (set_name not in VALID_LIST) and (set_name not in TEST_LIST):
-                    dataset_list.append(dataset)
-            else:
-                if set_name in list_name:
-                    dataset_list.append(dataset)
-        '''
-        '''
-        X, Y = [], []
-        if load_fragment:
-            for dataset in dataset_list:
-                for dataset_piece in dataset['splitted_scaled_feature_data']:
-                    data = []
-                    for key in x_keys:
-                        if key in dataset_piece['statistics'].keys():
-                            data.append(dataset_piece['statistics'][key])
-                        else:
-                            print("ERROR : No key named " + key)
-                    X.append(data)
-                    Y.append(dataset['emotion_number'])
-        else:
-            for dataset in dataset_list:
-                data = []
-                for key in x_keys:
-                    if key in dataset['total_scaled_statistics']:
-                        data.append(dataset['total_scaled_statistics'][key])
-                    else:
-                        print("ERROR : No key named " + key)
-                X.append(data)
-                Y.append(dataset['emotion_number'])
-        '''
-        return np.array(X), np.array(Y)
+                names.append(dataset['set_name'])
+                measures.append('total')
+
+        return np.array(X), np.array(Y), names, measures
 
 
 class EmotionDataset(Dataset):
-    def __init__(self, x, y):
+    def __init__(self, x, y, names, measures):
         self.x = x
         self.y = y
+        self.names = names
+        self.measures = measures
     
     def __getitem__(self, index):
-        return self.x[index], self.y[index] - 1
+        return self.x[index], self.y[index] - 1, self.names[index], self.measures[index]
     
     def __len__(self):
         return self.x.shape[0]
@@ -144,16 +121,16 @@ class EmotionDataset(Dataset):
 
 def get_dataloader(data_path, frag_data_name, total_data_name, feature_keys, test_with_split):
     DL = RawDataLoader(data_path, frag_data_name, total_data_name, test_with_split)
-    x_train, y_train = DL.load_dataset('train', feature_keys, load_fragment=True)
-    x_valid, y_valid = DL.load_dataset('valid', feature_keys, load_fragment=test_with_split)
-    x_test, y_test = DL.load_dataset('test', feature_keys, load_fragment=test_with_split)
+    x_train, y_train, names_train, measures_train = DL.load_dataset('train', feature_keys, load_fragment=True)
+    x_valid, y_valid, names_valid, measures_valid = DL.load_dataset('valid', feature_keys, load_fragment=test_with_split)
+    x_test, y_test, names_test, measures_test = DL.load_dataset('test', feature_keys, load_fragment=test_with_split)
 
-    train_set = EmotionDataset(x_train, y_train)
-    valid_set = EmotionDataset(x_valid, y_valid)
-    test_set = EmotionDataset(x_test, y_test)
+    train_set = EmotionDataset(x_train, y_train, names_train, measures_train)
+    valid_set = EmotionDataset(x_valid, y_valid, names_valid, measures_valid)
+    test_set = EmotionDataset(x_test, y_test, names_test, measures_test)
 
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE,  shuffle=True, drop_last=False)
-    valid_loader = DataLoader(valid_set, batch_size=BATCH_SIZE,  shuffle=True, drop_last=False)
-    test_loader = DataLoader(test_set, batch_size=BATCH_SIZE,  shuffle=True, drop_last=False)
+    valid_loader = DataLoader(valid_set, batch_size=BATCH_SIZE,  shuffle=False, drop_last=False)
+    test_loader = DataLoader(test_set, batch_size=BATCH_SIZE,  shuffle=False, drop_last=False)
 
     return train_loader, valid_loader, test_loader
