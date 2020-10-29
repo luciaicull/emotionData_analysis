@@ -17,42 +17,10 @@ class Runner():
         self.total_X, self.total_Y = utils.make_X_Y_not_splitted(self.total_data, feature_key)
         self.train_X, self.train_Y = utils.make_X_Y_not_splitted(self.train_data, feature_key)
         self.test_X, self.test_Y = utils.make_X_Y_not_splitted(self.test_data, feature_key)
-        '''
-        # test code for fragment classification test ==> move to frag_classification
-        self.train_X, self.train_Y, _ = utils.make_X_Y_for_xmlmidi(self.train_data)
-        self.test_X, self.test_Y, self.test_info = utils.make_X_Y_for_xmlmidi(self.test_data)
-        '''
 
         self.svm_options = {'C': 10, 'kernel': 'linear',
                             'decision_function_shape': 'ovr', 'gamma': 'scale'}
 
-    '''
-    # test code for fragment classification test ==> move to frag_classification
-    def test_fragment(self):
-        clf = svm.SVC(C=self.svm_options['C'], kernel=self.svm_options['kernel'], decision_function_shape=self.svm_options['decision_function_shape'], gamma=self.svm_options['gamma'])
-        clf.fit(self.train_X, self.train_Y)
-
-        predicted = clf.predict(self.test_X)
-        
-        total_accuracy = clf.score(self.test_X, self.test_Y)
-        
-        total_result = self._get_total_result(predicted, self.test_Y)
-        
-        print("total_accuracy : %0.3f" % total_accuracy)
-        self._print_total_result(total_result)
-
-        print("")
-        self._print_correct_fragments(predicted, self.test_Y, self.test_info)
-
-    def _print_correct_fragments(self, prediction, y_list, info_list):
-        f = open('./fragment_result.csv', 'w', encoding='utf-8')
-        wr = csv.writer(f)
-        wr.writerow(['set name', 'bucket', 'total bucket', 'emotion number', 'pred'])
-        for pred, y, info in zip(prediction, y_list, info_list):
-            #if pred == y:
-            wr.writerow([info[0], info[1], info[2], y, pred])
-        f.close()        
-    '''
     def run_svm(self):
         kf = KFold(n_splits=5)
         self._run_cross_validation_svm(kf)
