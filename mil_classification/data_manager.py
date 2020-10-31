@@ -57,6 +57,8 @@ class RawDataLoader(object):
                 eN_list.append(data)
                 eN_measures.append((dataset['start_measure'], dataset['end_measure']))
             
+            eN_list = np.asarray(eN_list)
+            
             X.append(eN_list)
             Y.append(dataset['emotion_number'])
             names.append(dataset['set_name'])
