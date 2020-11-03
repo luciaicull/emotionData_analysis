@@ -1,25 +1,16 @@
-FEATURE_KEYS = ['relative_velocity_std', 'relative_velocity_mean', 'velocity_ratio_std', 
-                'relative_beat_tempo_mean', 'relative_measure_tempo_mean', 'beat_tempo_ratio_std', 'relative_beat_tempo_std',
-                'original_duration_ratio_std', 'relative_elongated_duration_std', 'relative_original_duration_std',
-                'relative_onset_deviation_std']
+FEATURE_KEYS = ['beat_tempo_ratio_mean',
+                'beat_tempo_ratio_std',
+                'relative_beat_tempo_mean',
 
-XMLMIDI_FEATURE_KEYS = ['beat_tempo_ratio_std', 'relative_velocity_kurt', 'velocity_ratio_std', 'relative_velocity_std', 
+                'velocity_ratio_mean',
+                'velocity_ratio_std',
+                'relative_velocity_mean',
+                'relative_velocity_std',
+                'relative_velocity_kurt',
 
-                        'relative_beat_tempo_mean', 'beat_tempo_ratio_mean', 'relative_original_duration_mean', 
-                        'original_duration_ratio_mean', 'relative_velocity_mean', 'velocity_ratio_mean']
-
-
-MIDIMIDI_FEATURE_KEYS = ['relative_velocity_std', 'relative_velocity_kurt',
-                         'velocity_ratio_std', 'velocity_ratio_kurt', 
-
-                         'relative_original_duration_std',
-                         'original_duration_ratio_mean',
-
-                         'relative_elongated_duration_std', 
-                         
-                         'interval_mean']
-
-
+                'original_duration_ratio_mean',
+                'relative_original_duration_mean']
+                
 TEST_LIST = ['Bach.french-suite_bwv812_no1_allemande.mm_1-end.s004',
              'Bach.french-suite_bwv816_no5_courante.mm_1-end.s002',
              'Chopin.nocturne_op9_no2_.mm_1-12.s021',
