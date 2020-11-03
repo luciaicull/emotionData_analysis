@@ -2,14 +2,14 @@ import pandas as pd
 
 def get_result(pred_list, answ_list):
     # pred_list : list of pred (= [0.7, 0.1, 0.05, 0.1, 0.05])
-    # answ_list : list of ans (= [1, 0, 0, 0, 0])
-    result = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+    # answ_list : list of ans (= 1)
+    result = [[0, 0, 0, 0, 0] for _ in range(5)]
     for pred, ans in zip(pred_list, answ_list):
         p = pred.index(max(pred))
-        a = ans[0]
+        a = ans
         result[a][p] += 1
 
-    ratio_result = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+    ratio_result = [[0, 0, 0, 0, 0] for _ in range(5)]
     for i, emotion in enumerate(result):
         for j, pred_num in enumerate(emotion):
             ratio_result[i][j] = pred_num/sum(emotion)
