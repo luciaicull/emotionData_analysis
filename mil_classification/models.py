@@ -24,7 +24,7 @@ class AdaptivePoolingClassifier(nn.Module):
             #nn.ReLU()
         )
 
-        self.alpha = nn.Parameter(th.zeros(5))
+        self.alpha = nn.Parameter(th.ones(self.output_size))
 
 
     def forward(self, x):
