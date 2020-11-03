@@ -44,7 +44,7 @@ class Runner():
 
             # check accuracy
             total_accuracy = clf.score(test_X_for_cv, test_Y_for_cv)
-            total_result = self._get_total_result(predicted, test_Y_for_cv)
+            total_result = utils.get_total_result(predicted, test_Y_for_cv)
 
             fold_total_accuracy.append(total_accuracy)
             fold_total_result.append(total_result)
@@ -79,8 +79,8 @@ class Runner():
             final_total_result_mean[key] = mean
             final_total_result_std[key] = std * 2
 
-        self._print_total_result(final_total_result_mean)
-        self._print_total_result(final_total_result_std)
+        utils.print_total_result(final_total_result_mean)
+        utils.print_total_result(final_total_result_std)
     
 
     def _run_train_test_svm(self):
@@ -90,12 +90,12 @@ class Runner():
         predicted = clf.predict(self.test_X)
         total_accuracy = clf.score(self.test_X, self.test_Y)
         
-        total_result = self._get_total_result(predicted, self.test_Y)
+        total_result = utils.get_total_result(predicted, self.test_Y)
         
         print("total_accuracy : %0.3f" % total_accuracy)
-        self._print_total_result(total_result)
+        utils.print_total_result(total_result)
 
-
+    '''
     def _print_total_result(self, total_result):
         for key in total_result.keys():
             print(key)
@@ -178,3 +178,4 @@ class Runner():
                 ratio_result[i][j] = pred_num/sum(emotion)
             
         return ratio_result
+    '''
