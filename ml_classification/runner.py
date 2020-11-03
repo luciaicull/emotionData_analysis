@@ -1,15 +1,18 @@
 from sklearn.model_selection import KFold
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 import numpy as np
 import csv
 
 from . import utils
-from .constants import XMLMIDI_FEATURE_KEYS, FEATURE_KEYS
+from .constants import FEATURE_KEYS
 
 class Runner():
     def __init__(self, total_data, train_data, test_data):
         feature_key = FEATURE_KEYS
+        self.kf = KFold(n_splits=5)
+        
         self.total_data = total_data
         self.train_data = train_data
         self.test_data = test_data
@@ -18,15 +21,19 @@ class Runner():
         self.train_X, self.train_Y = utils.make_X_Y_not_splitted(self.train_data, feature_key)
         self.test_X, self.test_Y = utils.make_X_Y_not_splitted(self.test_data, feature_key)
 
+    def run_random_forest(self):
+        clf = RandomForestClassifier(random_state=0)
+        self._run_cross_validation(self.kf, clf)
+        self._run_train_test(clf)
+
     def run_svm(self):
-        kf = KFold(n_splits=5)
         svm_options = {'C': 10, 'kernel': 'linear',
                        'decision_function_shape': 'ovr', 'gamma': 'scale'}
         clf = svm.SVC(C=svm_options['C'], kernel=svm_options['kernel'], 
                       decision_function_shape=svm_options['decision_function_shape'], 
                       gamma=svm_options['gamma'])
         
-        self._run_cross_validation(kf, clf)
+        self._run_cross_validation(self.kf, clf)
         self._run_train_test(clf)
     
     def _run_cross_validation(self, kf, classifier):
