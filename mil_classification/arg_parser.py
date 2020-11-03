@@ -10,6 +10,8 @@ def get_parser():
     p.add_argument("--data_name", type=str,
                    default="splitted_hop_8_split_16.dat")
 
+    p.add_argument("--pooling", type=str,
+                   default="auto")
     p.add_argument("--learning_rate", type=float,
                    default=0.001)
     p.add_argument("--num_epoch", type=int,
