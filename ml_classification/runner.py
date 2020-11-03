@@ -18,15 +18,18 @@ class Runner():
         self.train_X, self.train_Y = utils.make_X_Y_not_splitted(self.train_data, feature_key)
         self.test_X, self.test_Y = utils.make_X_Y_not_splitted(self.test_data, feature_key)
 
-        self.svm_options = {'C': 10, 'kernel': 'linear',
-                            'decision_function_shape': 'ovr', 'gamma': 'scale'}
-
     def run_svm(self):
         kf = KFold(n_splits=5)
-        self._run_cross_validation_svm(kf)
-        self._run_train_test_svm()
+        svm_options = {'C': 10, 'kernel': 'linear',
+                       'decision_function_shape': 'ovr', 'gamma': 'scale'}
+        clf = svm.SVC(C=svm_options['C'], kernel=svm_options['kernel'], 
+                      decision_function_shape=svm_options['decision_function_shape'], 
+                      gamma=svm_options['gamma'])
+        
+        self._run_cross_validation(kf, clf)
+        self._run_train_test(clf)
     
-    def _run_cross_validation_svm(self, kf):
+    def _run_cross_validation(self, kf, classifier):
         fold_total_accuracy = []
         fold_total_result = []
         for train_index, test_index in kf.split(self.total_X):
@@ -35,15 +38,13 @@ class Runner():
             train_Y_for_cv, test_Y_for_cv = self.total_Y[train_index], self.total_Y[test_index]
 
             # training
-            clf = svm.SVC(C=self.svm_options['C'], kernel=self.svm_options['kernel'],
-                          decision_function_shape=self.svm_options['decision_function_shape'], gamma=self.svm_options['gamma'])
-            clf.fit(train_X_for_cv, train_Y_for_cv)
+            classifier.fit(train_X_for_cv, train_Y_for_cv)
 
             # get prediction
-            predicted = clf.predict(test_X_for_cv)
+            predicted = classifier.predict(test_X_for_cv)
 
             # check accuracy
-            total_accuracy = clf.score(test_X_for_cv, test_Y_for_cv)
+            total_accuracy = classifier.score(test_X_for_cv, test_Y_for_cv)
             total_result = utils.get_total_result(predicted, test_Y_for_cv)
 
             fold_total_accuracy.append(total_accuracy)
@@ -83,12 +84,11 @@ class Runner():
         utils.print_total_result(final_total_result_std)
     
 
-    def _run_train_test_svm(self):
-        clf = svm.SVC(C=self.svm_options['C'], kernel=self.svm_options['kernel'], decision_function_shape=self.svm_options['decision_function_shape'], gamma=self.svm_options['gamma'])
-        clf.fit(self.train_X, self.train_Y)
+    def _run_train_test(self, classifier):
+        classifier.fit(self.train_X, self.train_Y)
 
-        predicted = clf.predict(self.test_X)
-        total_accuracy = clf.score(self.test_X, self.test_Y)
+        predicted = classifier.predict(self.test_X)
+        total_accuracy = classifier.score(self.test_X, self.test_Y)
         
         total_result = utils.get_total_result(predicted, self.test_Y)
         
