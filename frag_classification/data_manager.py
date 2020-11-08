@@ -4,7 +4,7 @@ import numpy as np
 import math
 from torch.utils.data import Dataset, DataLoader
 
-from .constants import VALID_LIST, TEST_LIST, BATCH_SIZE
+from .constants import TEST_LIST_30, TEST_LIST_20, BATCH_SIZE
 
 class RawDataLoader(object):
     def __init__(self, data_path, frag_data_name, total_data_name, test_with_split):
@@ -23,10 +23,12 @@ class RawDataLoader(object):
 
 
     def load_dataset(self, mode, x_keys, load_fragment):
+        valid_list = TEST_LIST_20
+        test_list = TEST_LIST_30
         if mode == 'valid':
-            list_name = VALID_LIST
+            list_name = valid_list
         elif mode == 'test':
-            list_name = TEST_LIST
+            list_name = test_list
         else:
             list_name = None
         
@@ -36,7 +38,7 @@ class RawDataLoader(object):
             for eN_dataset in self.frag_dataset:
                 set_name = eN_dataset[0]['set_name']
                 if mode == 'train':
-                    if (set_name not in VALID_LIST) and (set_name not in TEST_LIST):
+                    if (set_name not in valid_list) and (set_name not in test_list):
                         dataset_list.append(eN_dataset)
                 else:
                     if set_name in list_name:
@@ -77,7 +79,7 @@ class RawDataLoader(object):
             for dataset in self.total_dataset:
                 set_name = dataset['set_name']
                 if mode == 'train':
-                    if (set_name not in VALID_LIST) and (set_name not in TEST_LIST):
+                    if (set_name not in valid_list) and (set_name not in test_list):
                         dataset_list.append(dataset)
                 else:
                     if set_name in list_name:
