@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import time
 
-from .constants import NUM_EPOCH, FEATURE_KEYS, LEARNING_RATE, TEST_FEATURE_KEYS
+from .constants import NUM_EPOCH, FEATURE_KEYS, LEARNING_RATE
 from . import data_manager, models, utils
 from .arg_parser import get_parser
 
@@ -12,7 +12,6 @@ class Runner(object):
         self.model = models.SimpleClassifier(input_size)
         self.model = self.model.double()
         
-        #self.criterion = torch.nn.MultiMarginLoss()
         self.criterion = torch.nn.CrossEntropyLoss()
 
         self.optimizer = torch.optim.Adam(
@@ -30,7 +29,6 @@ class Runner(object):
         for batch, (x, y) in enumerate(dataloader):
             x = x.to(self.device)
             y = y.to(self.device, dtype=torch.long)
-            #y = y.view(y.size(1))
 
             prediction = self.model(x)
             
@@ -55,9 +53,10 @@ def main():
     
     p = get_parser()
     args = p.parse_args()
-    feature_keys = TEST_FEATURE_KEYS
+    feature_keys = FEATURE_KEYS
 
     train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.name, feature_keys)
+    train_loader, test_loader = data_manager.get_dataloader(args.path, args.name, feature_keys)
     runner = Runner(len(feature_keys))
 
     print('Training : ')

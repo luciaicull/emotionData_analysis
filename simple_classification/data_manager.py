@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
-from .constants import VALID_LIST, TEST_LIST, STAT_TYPE, BATCH_SIZE
+from .constants import TEST_LIST_20, TEST_LIST_30, STAT_TYPE, BATCH_SIZE
 
 class RawDataLoader(object):
     def __init__(self, data_path, file_name):
@@ -17,20 +17,20 @@ class RawDataLoader(object):
         return dict_data
 
     def load_dataset(self, mode, stat, x_keys):
+        valid_list = TEST_LIST_20
+        test_list = TEST_LIST_30
         if mode == 'valid':
-            list_name = VALID_LIST
+            list_name = valid_list
         elif mode == 'test':
-            list_name = TEST_LIST
+            list_name = test_list
         else:
             list_name = None
 
         data_list = []
         for dataset in self.total_dataset:
-            #name = dicts[0]['name'] + '.' + dicts[0]['performer']
             set_name = dataset['set_name']
             if mode == 'train':
-                #if (name not in VALID_LIST) and (name not in TEST_LIST):
-                if (set_name not in VALID_LIST) and (set_name not in TEST_LIST):
+                if (set_name not in valid_list) and (set_name not in test_list):
                     data_list.append(dataset)
             else:
                 if set_name in list_name :
@@ -61,8 +61,6 @@ class EmotionDataset(Dataset):
         self.y = y
     
     def __getitem__(self, index):
-        #y = np.eye(5)[self.y[index] - 1]
-        #return self.x[index], y
         return self.x[index], self.y[index] - 1
     
     def __len__(self):
