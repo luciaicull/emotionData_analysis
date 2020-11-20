@@ -137,8 +137,7 @@ def main():
         print("[Epoch %d/%d] [Train Loss: %.4f] [Train Acc: %.4f%%] [Valid Loss: %.4f] [Valid Acc: %.4f%%]" %
               (epoch + 1, num_epoch, train_loss, train_acc, valid_loss, valid_acc))
     
-    #_, _, _ = runner.run(valid_loader, mode='valid', save_result=True, save_name=args.frag_data_name[:-len('.dat')])
-    _, test_acc, test_result = runner.run(test_loader, mode='test')#, save_result=True, save_name=args.frag_data_name[:-len('.dat')])
+    _, test_acc, test_result = runner.run(test_loader, mode='test')
     print("Training Finished")
     print("Training Accuracy: %.4f%%" % train_acc)
     utils.print_total_result(train_result)
