@@ -78,7 +78,7 @@ FEATURE_KEYS = ['beat_tempo_ratio_mean',
 STAT_TYPE = 'scaled_statistics'
 
 BATCH_SIZE = 1
-NUM_EPOCH = 55
+NUM_EPOCH = 67
 LEARNING_RATE = 1e-3
 
 TEST_LIST_20 = ['Bach.french-suite_bwv816_no5_gavotte.mm_1-end.s002', 'Bach.toccata_bwv914__.mm_14-41.s007', 'Bach.prelude-and-fugue_bwv870_no1_fugue.mm_1-46.s007', 'Bach.inventions_bwv775_no4_.mm_1-end.s020', 'Scarlatti.sonata_k481__.mm_1-35.s018', 'Bach.french-suite_bwv816_no5_courante.mm_1-end.s002', 'Bach.french-suite_bwv816_no5_allemande.mm_1-12.s021', 'Mozart.sonata_k331_no11_mov3.mm_1-32.s016', 'Beethoven.sonata_op13_no8_mov3.mm_1-43.s007', 'Hanon.the-virtuoso-pianist__no39_cmajor.mm_1-end.s018', 'Beethoven.sonata_op109_no30_mov3.mm_1-67.s019', 'Beethoven.sonata_op110_no31_mov2.mm_1-96.s018', 'Beethoven.sonata_op13_no8_mov3.mm_104-120.s007', 'Beethoven.sonata_op57_no23_mov2.mm_1-32.s007', 'Beethoven.sonata_op57_no23_mov3.mm_1-67.s007', 'Beethoven.sonata_op110_no31_mov1.mm_1-40.s006', 'Beethoven.sonata_op110_no31_mov3.mm_27-110.s018', 'Beethoven.sonata_op57_no23_mov1.mm_35-50.s007', 'Mozart.sonata_k545_no16_mov3.mm_1-20.s007', 'Mozart.sonata_k331_no11_mov3.mm_1-41.s020', 'Mozart.sonata_k545_no16_mov2.mm_1-16.s007', 'Chopin.nocturne_opposth_no20_.mm_21-46.s007',
