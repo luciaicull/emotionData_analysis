@@ -124,15 +124,15 @@ def main():
     args = p.parse_args()
     feature_keys = FEATURE_KEYS
 
-    #train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, feature_keys)
-    train_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, feature_keys)
+    train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, feature_keys)
+    #train_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, feature_keys)
     runner = Runner(len(feature_keys))
 
     num_epoch = args.num_epoch
     print('Training : ')
     for epoch in range(num_epoch):
         train_loss, train_acc, train_result = runner.run(train_loader, mode='train')
-        valid_loss, valid_acc, valid_result = runner.run(test_loader, mode='eval')
+        valid_loss, valid_acc, valid_result = runner.run(valid_loader, mode='eval')
         print("[Epoch %d/%d] [Train Loss: %.4f] [Train Acc: %.4f%%] [Valid Loss: %.4f] [Valid Acc: %.4f%%]" %
               (epoch + 1, num_epoch, train_loss, train_acc, valid_loss, valid_acc))
     
