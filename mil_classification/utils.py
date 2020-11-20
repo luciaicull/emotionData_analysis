@@ -1,6 +1,6 @@
 import pandas as pd
 
-def get_result(pred_list, answ_list):
+def get_result(pred_list, answ_list, additional=False):
     # pred_list : list of pred (= [0.7, 0.1, 0.05, 0.1, 0.05])
     # answ_list : list of ans (= 1)
     result = [[0, 0, 0, 0, 0] for _ in range(5)]
@@ -8,6 +8,22 @@ def get_result(pred_list, answ_list):
         p = pred.index(max(pred))
         a = ans
         result[a][p] += 1
+    
+    if additional:
+        high_arousal_acc = (result[3][3] + result[3][4] + result[4][3] + result[4][4])/(sum(result[3]) + sum(result[4]))
+        low_arousal_acc = (result[1][1] + result[1][2] + result[2][1] + result[2][2])/(sum(result[1]) + sum(result[2]))
+        high_valence_acc = (result[3][3] + result[3][1] + result[1][3] + result[1][1])/(sum(result[1]) + sum(result[1]))
+        low_valence_acc = (result[2][2] + result[2][4] + result[4][2] + result[4][4])/(sum(result[2]) + sum(result[4]))
+        
+        print(high_arousal_acc)
+        print(low_arousal_acc)
+        print(high_valence_acc)
+        print(low_valence_acc)
+        
+        arousal_acc = (result[3][3] + result[3][4] + result[4][3] + result[4][4] + result[1][1] + result[1][2] + result[2][1] + result[2][2]) /(sum(result[3]) + sum(result[4]) + sum(result[1]) + sum(result[2]))
+        valence_acc = (result[3][3] + result[3][1] + result[1][3] + result[1][1] + result[2][2] + result[2][4] + result[4][2] + result[4][4]) / (sum(result[1]) + sum(result[1]) + sum(result[2]) + sum(result[4]))
+        print(arousal_acc)
+        print(valence_acc)
 
     ratio_result = [[0, 0, 0, 0, 0] for _ in range(5)]
     for i, emotion in enumerate(result):

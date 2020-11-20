@@ -12,17 +12,20 @@ class AdaptivePoolingClassifier(nn.Module):
         
         self.predictor = nn.Sequential(
             nn.Linear(self.input_size, self.input_size*3),
-            #nn.ReLU(),
-
-            nn.Linear(self.input_size*3, self.input_size*2),
-            #nn.ReLU(),
-
-            nn.Linear(self.input_size*2, self.input_size),
+            nn.ReLU(),
+            nn.Linear(self.input_size*3, self.input_size*5),
+            nn.ReLU(),
+            nn.Linear(self.input_size*5, self.input_size*7),
+            nn.ReLU(),
+            nn.Linear(self.input_size*7, self.input_size*5),
+            nn.ReLU(),
+            nn.Linear(self.input_size*5, self.input_size*3),
+            nn.ReLU(),
+            nn.Linear(self.input_size*3, self.input_size),
             nn.ReLU(),
 
 
             nn.Linear(self.input_size, self.output_size),
-            #nn.ReLU()
         )
 
         self.alpha = nn.Parameter(th.ones(self.output_size))
@@ -47,7 +50,7 @@ class AdaptivePoolingClassifier(nn.Module):
         elif self.pooling == "softmax":
             result = self.soft_max_pooling(predicted_x)
 
-        return result
+        return result, predicted_x
 
     def auto_pooling(self, predicted_x):
         alpha_x = self.alpha * predicted_x
