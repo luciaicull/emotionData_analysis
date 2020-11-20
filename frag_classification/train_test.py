@@ -122,7 +122,6 @@ def main():
 
     p = get_parser()
     args = p.parse_args()
-    #feature_keys = TEST_FEATURE_KEYS
     feature_keys = FEATURE_KEYS
 
     #train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, feature_keys)
