@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import csv
+import pickle
 
 from .arg_parser import get_parser
 from . import data_manager, models, utils
@@ -72,6 +73,12 @@ class Runner(object):
             if save_result:
                 csv_file.close()
 
+            result_dict = {'pred':prediction_list, 'answer':answer_list, 'name':name_list}
+            result_save_path = '/home/yoojin/data/emotionDataset/final/save/'+self.pooling+'.dat'
+            with open(result_save_path, "wb") as f:
+                pickle.dump(result_dict, f, protocol=2)
+
+
             # print results
             total_result, total_accuracy = utils.get_result(prediction_list, answer_list, True)
             COMPOSER_PERIOD_DICT = {'Bach': 'Baroque', 'Badarzewska-Baranowska': 'Romantic', 'Bartok': 'Modern', 'Beethoven': 'Classical',
@@ -116,7 +123,7 @@ class Runner(object):
 
 
 def main():
-    seed = 0
+    seed = 1301
     print(seed)
     torch.manual_seed(seed)
 
@@ -124,15 +131,15 @@ def main():
     args = p.parse_args()
     feature_keys = FEATURE_KEYS
 
-    train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.data_name, feature_keys, args.batch_size)
-    #train_loader, test_loader = data_manager.get_dataloader(args.path, args.data_name, feature_keys, args.batch_size)
+    #train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.data_name, feature_keys, args.batch_size)
+    train_loader, test_loader = data_manager.get_dataloader(args.path, args.data_name, feature_keys, args.batch_size)
 
     runner = Runner(len(feature_keys), args.learning_rate, args.pooling)
 
     print('Training : ')
     for epoch in range(args.num_epoch):
         train_loss, train_acc, train_result = runner.run(train_loader, mode='train')
-        valid_loss, valid_acc, valid_result = runner.run(valid_loader, mode='eval')
+        valid_loss, valid_acc, valid_result = runner.run(test_loader, mode='eval')
         print("[Epoch %d/%d] [Train Loss: %.4f] [Train Acc: %.4f%%] [Valid Loss: %.4f] [Valid Acc: %.4f%%]" %
               (epoch + 1, args.num_epoch, train_loss, train_acc, valid_loss, valid_acc))
 

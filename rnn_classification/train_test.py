@@ -5,23 +5,20 @@ import csv
 
 from .arg_parser import get_parser
 from . import data_manager, models, utils
-from .constants import LEARNING_RATE, FEATURE_KEYS
-
+from .constants import FEATURE_KEYS
 
 class Runner(object):
-    def __init__(self, input_size):
-        self.model = models.SimpleClassifier(input_size)
-        self.model = self.model.double()
-
+    def __init__(self, input_size, hidden_size, num_layers, learning_rate):
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.model = models.RNNClassifier(self.device,
+                                          feature_num=input_size, 
+                                          hidden_size=hidden_size, 
+                                          num_layers=num_layers).to(self.device)
         self.criterion = torch.nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
 
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=LEARNING_RATE)
-
-        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-        self.model = self.model.to(self.device)
-    
     def run(self, dataloader, mode='train', save_result=False, save_name=None):
-        if save_result:
+        if mode is 'test' and save_result:
             csv_file = open('/home/yoojin/data/emotionDataset/final/save/'+save_name+'_'+mode+'.csv', 'w')
             writer = csv.writer(csv_file, delimiter=',')
             writer.writerow(['name', 'measure range','result', 'answer'])
@@ -31,51 +28,54 @@ class Runner(object):
         epoch_loss = 0
         prediction_list = []
         answer_list = []
-        names = []
-        for _, (x, y, name, measure) in enumerate(dataloader):
-            if mode != 'train':
-                frag_prediction_list = torch.as_tensor([], dtype=torch.double).to(self.device)
-                for frag, measure_range in zip(x, measure):
-                    frag_x = torch.as_tensor([], dtype=torch.double).to(self.device)
-                    for f in frag:
-                        f = torch.unsqueeze(f, dim=0).to(self.device, dtype=torch.double)
-                        frag_x = torch.cat((frag_x, f))
-                    prediction = self.model(frag_x)
-                    prediction = torch.unsqueeze(prediction, dim=0)
-                    frag_prediction_list = torch.cat((frag_prediction_list, prediction))
-                    
-                    # test fragment softmax result
-                    m = nn.Softmax(dim=1)
-                    softmax_result = m(prediction)
-                    if save_result:
-                        writer.writerow([name, [t.item() for t in measure_range], softmax_result.tolist(), y.item()])
+        name_list = []
 
-                prediction = torch.mean(frag_prediction_list, axis=0)
-                if mode is 'test':
-                    names.append(name)
-            else:
-                x = x.to(self.device)
-                prediction = self.model(x)
-                if mode is 'test':
-                    names.append(name)
-            
-            y = y.to(self.device, dtype=torch.long)
+        self.model = self.model.float()
+        frag_results = dict()
+        for _, (x_list, y, name, measure_list) in enumerate(dataloader):
+            x_list = x_list.to(self.device, dtype=torch.float)
+            prediction = self.model(x_list)
 
-            loss = self.criterion(prediction.view(1, prediction.size(0)), y)
+            y = y.to(self.device)
+
+            loss = self.criterion(prediction, y)
+
             if mode is 'train':
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-            
+
             epoch_loss += prediction.size(0) * loss.item()
 
-            prediction_list.append(prediction.tolist())
-            answer_list.append(y.tolist())
-        
+            sm = torch.nn.Softmax()
+            pred_prob = sm(prediction)
+            prediction_list.append(pred_prob.tolist()[0])
+            answer_list.append(y.tolist()[0])
+            name_list.append(name)
+
+            '''
+            if mode is 'test' and save_result:
+                if predicted_x_list.size()[1] != 1:
+                    predicted_x_list = predicted_x_list.squeeze()
+                else:
+                    predicted_x_list = predicted_x_list.squeeze(dim=1)
+                for measure_range, pred_x_list in zip(measure_list, predicted_x_list):
+                    meas = [t.item() for t in measure_range]
+                    res = sm(pred_x_list).tolist()
+                    writer.writerow([name, meas, res, y.item()])
+                #frag_results[name] = {'measures':[[t.item() for t in positions] for positions in measure_list]}
+                #frag_results[name]['frag_results'] = sm(predicted_x_list.squeeze()).tolist()
+            '''
+            
         epoch_loss = epoch_loss / len(dataloader.dataset)
+
         if mode is not 'test':
             total_result, total_accuracy = utils.get_result(prediction_list, answer_list)
         else:
+            if save_result:
+                csv_file.close()
+
+            # print results
             total_result, total_accuracy = utils.get_result(prediction_list, answer_list, True)
             COMPOSER_PERIOD_DICT = {'Bach': 'Baroque', 'Badarzewska-Baranowska': 'Romantic', 'Bartok': 'Modern', 'Beethoven': 'Classical',
                                     'Brahms': 'Romantic', 'Chopin': 'Romantic', 'Clementi': 'Classical', 'Debussy': 'Romantic',
@@ -88,7 +88,7 @@ class Runner(object):
                              'Romantic': [[], []],
                              'Modern': [[], []]}
             composer_result = dict()
-            for pred, ans, name in zip(prediction_list, answer_list, names):
+            for pred, ans, name in zip(prediction_list, answer_list, name_list):
                 composer = name[0].split('.')[0]
                 period = COMPOSER_PERIOD_DICT[composer]
                 # period result
@@ -112,31 +112,34 @@ class Runner(object):
                 print(composer_total_accuracy)
                 utils.print_total_result(composer_total_result)
 
-        if save_result:
-            csv_file.close()
+        return epoch_loss, total_accuracy, total_result
 
-        return epoch_loss, total_accuracy, total_result 
+
+
 
 def main():
-    torch.manual_seed(1234)
+    seed = 0
+    print(seed)
+    torch.manual_seed(seed)
 
     p = get_parser()
     args = p.parse_args()
     feature_keys = FEATURE_KEYS
+    
+    #train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.data_name, feature_keys, args.batch_size)
+    train_loader, test_loader = data_manager.get_dataloader(args.path, args.data_name, feature_keys, args.batch_size)
 
-    #train_loader, valid_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, feature_keys)
-    train_loader, test_loader = data_manager.get_dataloader(args.path, args.frag_data_name, feature_keys)
-    runner = Runner(len(feature_keys))
+    runner = Runner(len(feature_keys), args.hidden_size, args.num_layers, args.learning_rate)
 
-    num_epoch = args.num_epoch
     print('Training : ')
-    for epoch in range(num_epoch):
+    for epoch in range(args.num_epoch):
         train_loss, train_acc, train_result = runner.run(train_loader, mode='train')
+        #valid_loss, valid_acc, valid_result = runner.run(valid_loader, mode='eval')
         valid_loss, valid_acc, valid_result = runner.run(test_loader, mode='eval')
         print("[Epoch %d/%d] [Train Loss: %.4f] [Train Acc: %.4f%%] [Valid Loss: %.4f] [Valid Acc: %.4f%%]" %
-              (epoch + 1, num_epoch, train_loss, train_acc, valid_loss, valid_acc))
-    
-    _, test_acc, test_result = runner.run(test_loader, mode='test')
+              (epoch + 1, args.num_epoch, train_loss, train_acc, valid_loss, valid_acc))
+
+    _, test_acc, test_result = runner.run(test_loader, mode='test', save_result=True, save_name=args.data_name[:-len('.dat')])
     print("Training Finished")
     print("Training Accuracy: %.4f%%" % train_acc)
     utils.print_total_result(train_result)
@@ -146,7 +149,6 @@ def main():
 
     print("Test Accuracy: %.4f%%" % test_acc)
     utils.print_total_result(test_result)
-
 
 if __name__ == "__main__":
     main()
